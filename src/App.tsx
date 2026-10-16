@@ -83,7 +83,9 @@ export default function App() {
   const [linesCleared, setLinesCleared] = useState<number>(0);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [isNewHighScore, setIsNewHighScore] = useState<boolean>(false);
-  const [isMuted, setIsMuted] = useState<boolean>(() => sound.isMuted());
+  const [isSfxMuted, setIsSfxMuted] = useState<boolean>(() => sound.isSfxMuted());
+  const [isBgmMuted, setIsBgmMuted] = useState<boolean>(() => sound.isBgmMuted());
+  const [isMuted, setIsMuted] = useState<boolean>(() => sound.isSfxMuted());
   const [showHelp, setShowHelp] = useState<boolean>(false);
 
   // Boosters & Power-ups State
@@ -417,11 +419,44 @@ export default function App() {
     updatePlayerStatsAction({ gamePlayedInc: true });
   }, [activeTheme.colorDefs, updatePlayerStatsAction]);
 
-  // Toggle Mute
-  const handleToggleMute = useCallback(() => {
-    const nextMuted = sound.toggleMute();
+  // Toggle SFX Sound Effects Mute
+  const handleToggleSfxMute = useCallback(() => {
+    const nextMuted = sound.toggleSfxMute();
+    setIsSfxMuted(nextMuted);
     setIsMuted(nextMuted);
   }, []);
+
+  // Toggle BGM Background Music Mute
+  const handleToggleBgmMute = useCallback(() => {
+    const nextBgmMuted = sound.toggleBgmMute();
+    setIsBgmMuted(nextBgmMuted);
+  }, []);
+
+  const handleToggleMute = handleToggleSfxMute;
+
+  // Auto-start BGM on first user interaction (browsers require user gesture)
+  useEffect(() => {
+    const handleFirstGesture = () => {
+      if (!sound.isBgmMuted()) {
+        sound.startBgm();
+      }
+    };
+    window.addEventListener('pointerdown', handleFirstGesture, { once: true });
+    window.addEventListener('keydown', handleFirstGesture, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', handleFirstGesture);
+      window.removeEventListener('keydown', handleFirstGesture);
+    };
+  }, []);
+
+  // Pause BGM when game is over, resume when restarted
+  useEffect(() => {
+    if (isGameOver) {
+      sound.pauseBgm();
+    } else if (!isBgmMuted) {
+      sound.startBgm();
+    }
+  }, [isGameOver, isBgmMuted]);
 
   // Update High Score helper
   const checkUpdateHighScore = useCallback(
@@ -848,9 +883,13 @@ export default function App() {
         score={score}
         highScore={highScore}
         comboStreak={comboStreak}
-        isMuted={isMuted}
+        isMuted={isSfxMuted}
+        isSfxMuted={isSfxMuted}
+        isBgmMuted={isBgmMuted}
         theme={activeTheme}
-        onToggleMute={handleToggleMute}
+        onToggleMute={handleToggleSfxMute}
+        onToggleSfxMute={handleToggleSfxMute}
+        onToggleBgmMute={handleToggleBgmMute}
         onRestart={handleRestart}
         onOpenHelp={() => setShowHelp(true)}
         onOpenTheme={() => setShowThemeModal(true)}
@@ -1020,8 +1059,15 @@ export default function App() {
         />
       )}
 
-      {/* Instructions Modal */}
-      <InstructionsModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+      {/* Instructions & Audio Settings Modal */}
+      <InstructionsModal
+        isOpen={showHelp}
+        isSfxMuted={isSfxMuted}
+        isBgmMuted={isBgmMuted}
+        onToggleSfxMute={handleToggleSfxMute}
+        onToggleBgmMute={handleToggleBgmMute}
+        onClose={() => setShowHelp(false)}
+      />
 
       {/* Theme Customization Modal */}
       <ThemeModal

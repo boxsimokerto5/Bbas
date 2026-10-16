@@ -5,16 +5,31 @@
 
 class SoundSystem {
   private ctx: AudioContext | null = null;
-  private muted: boolean = false;
+  private sfxMuted: boolean = false;
+  private bgmMuted: boolean = false;
+  private bgmPlaying: boolean = false;
+  private bgmTimer: ReturnType<typeof setInterval> | null = null;
+  private bgmCurrentStep: number = 0;
+  private nextStepTime: number = 0;
+  private bgmMasterGain: GainNode | null = null;
 
   constructor() {
-    // Read saved mute preference
+    // Read saved mute preferences
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('blockblast_muted');
-      if (saved !== null) {
-        this.muted = saved === 'true';
+      const savedSfx = localStorage.getItem('blockblast_sfx_muted') ?? localStorage.getItem('blockblast_muted');
+      if (savedSfx !== null) {
+        this.sfxMuted = savedSfx === 'true';
+      }
+      const savedBgm = localStorage.getItem('blockblast_bgm_muted');
+      if (savedBgm !== null) {
+        this.bgmMuted = savedBgm === 'true';
       }
     }
+  }
+
+  // Compatibility getter for existing methods
+  private get muted(): boolean {
+    return this.sfxMuted;
   }
 
   private initContext() {
@@ -30,15 +45,275 @@ class SoundSystem {
   }
 
   public isMuted(): boolean {
-    return this.muted;
+    return this.sfxMuted;
   }
 
   public toggleMute(): boolean {
-    this.muted = !this.muted;
+    return this.toggleSfxMute();
+  }
+
+  public isSfxMuted(): boolean {
+    return this.sfxMuted;
+  }
+
+  public toggleSfxMute(): boolean {
+    this.sfxMuted = !this.sfxMuted;
     if (typeof window !== 'undefined') {
-      localStorage.setItem('blockblast_muted', String(this.muted));
+      localStorage.setItem('blockblast_sfx_muted', String(this.sfxMuted));
+      localStorage.setItem('blockblast_muted', String(this.sfxMuted));
     }
-    return this.muted;
+    return this.sfxMuted;
+  }
+
+  public isBgmMuted(): boolean {
+    return this.bgmMuted;
+  }
+
+  public toggleBgmMute(): boolean {
+    this.bgmMuted = !this.bgmMuted;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('blockblast_bgm_muted', String(this.bgmMuted));
+    }
+    if (this.bgmMuted) {
+      this.pauseBgm();
+    } else {
+      this.startBgm();
+    }
+    return this.bgmMuted;
+  }
+
+  private getBgmMasterGain(): GainNode | null {
+    if (!this.ctx) return null;
+    if (!this.bgmMasterGain) {
+      this.bgmMasterGain = this.ctx.createGain();
+      this.bgmMasterGain.gain.setValueAtTime(this.bgmMuted ? 0 : 0.14, this.ctx.currentTime);
+      this.bgmMasterGain.connect(this.ctx.destination);
+    }
+    return this.bgmMasterGain;
+  }
+
+  /**
+   * Start looping background music track
+   */
+  public startBgm(): void {
+    if (this.bgmMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+
+    const master = this.getBgmMasterGain();
+    if (master) {
+      try {
+        master.gain.cancelScheduledValues(this.ctx.currentTime);
+        master.gain.setValueAtTime(master.gain.value, this.ctx.currentTime);
+        master.gain.linearRampToValueAtTime(0.14, this.ctx.currentTime + 0.3);
+      } catch {
+        // Ignore
+      }
+    }
+
+    if (this.bgmPlaying && this.bgmTimer) return;
+    this.bgmPlaying = true;
+    this.nextStepTime = this.ctx.currentTime + 0.05;
+
+    this.bgmTimer = setInterval(() => {
+      this.scheduleBgmSteps();
+    }, 30);
+  }
+
+  /**
+   * Pause/fade out background music track
+   */
+  public pauseBgm(): void {
+    if (!this.ctx || !this.bgmMasterGain) return;
+    try {
+      this.bgmMasterGain.gain.cancelScheduledValues(this.ctx.currentTime);
+      this.bgmMasterGain.gain.setValueAtTime(this.bgmMasterGain.gain.value, this.ctx.currentTime);
+      this.bgmMasterGain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.15);
+    } catch {
+      // Ignore
+    }
+  }
+
+  /**
+   * Stop background music loop completely
+   */
+  public stopBgm(): void {
+    this.pauseBgm();
+    if (this.bgmTimer) {
+      clearInterval(this.bgmTimer);
+      this.bgmTimer = null;
+    }
+    this.bgmPlaying = false;
+    this.bgmCurrentStep = 0;
+  }
+
+  private scheduleBgmSteps(): void {
+    if (!this.ctx || !this.bgmPlaying || this.bgmMuted) return;
+    const lookahead = 0.12;
+    const stepDuration = 0.144; // ~104 BPM 16th note
+
+    while (this.nextStepTime < this.ctx.currentTime + lookahead) {
+      this.playBgmStep(this.bgmCurrentStep, this.nextStepTime);
+      this.nextStepTime += stepDuration;
+      this.bgmCurrentStep = (this.bgmCurrentStep + 1) % 64;
+    }
+  }
+
+  private playBgmStep(step: number, time: number): void {
+    if (!this.ctx) return;
+    const master = this.getBgmMasterGain();
+    if (!master) return;
+
+    const bar = Math.floor(step / 16);
+    const barStep = step % 16;
+
+    // 1. Bassline (warm low sine) on beats 0, 6, 10
+    if (barStep === 0 || barStep === 6 || barStep === 10) {
+      const bassFreqs = [
+        [65.41, 98.00, 65.41], // C2, G2, C2 (Cmaj7)
+        [55.00, 82.41, 55.00], // A1, E2, A1 (Am7)
+        [43.65, 65.41, 43.65], // F1, C2, F1 (Fmaj7)
+        [49.00, 73.42, 49.00], // G1, D2, G1 (G7)
+      ];
+      const noteIdx = barStep === 0 ? 0 : barStep === 6 ? 1 : 2;
+      const freq = bassFreqs[bar][noteIdx];
+
+      try {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, time);
+
+        gain.gain.setValueAtTime(0.22, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.28);
+
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(time);
+        osc.stop(time + 0.28);
+      } catch {
+        // Ignore
+      }
+    }
+
+    // 2. Pad Chord Swell on beat 0 of each bar (soft, lush, relaxing)
+    if (barStep === 0) {
+      const chordNotes = [
+        [130.81, 164.81, 196.00, 246.94], // C3, E3, G3, B3 (Cmaj7)
+        [110.00, 130.81, 164.81, 196.00], // A2, C3, E3, G3 (Am7)
+        [87.31, 110.00, 130.81, 164.81],  // F2, A2, C3, E3 (Fmaj7)
+        [98.00, 123.47, 146.83, 174.61],  // G2, B2, D3, F3 (G7)
+      ][bar];
+
+      chordNotes.forEach((freq) => {
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, time);
+
+          gain.gain.setValueAtTime(0.001, time);
+          gain.gain.linearRampToValueAtTime(0.03, time + 0.4);
+          gain.gain.exponentialRampToValueAtTime(0.001, time + 2.1);
+
+          osc.connect(gain);
+          gain.connect(master);
+          osc.start(time);
+          osc.stop(time + 2.1);
+        } catch {
+          // Ignore
+        }
+      });
+    }
+
+    // 3. Melodic Marimba / Bell Arpeggio
+    const melodyMap: Record<number, number> = {
+      // Bar 0 (Cmaj7)
+      0: 392.00, 2: 523.25, 4: 659.25, 6: 783.99, 8: 659.25, 10: 587.33, 12: 523.25, 14: 493.88,
+      // Bar 1 (Am7)
+      16: 329.63, 18: 440.00, 20: 523.25, 22: 659.25, 24: 523.25, 26: 493.88, 28: 440.00, 30: 392.00,
+      // Bar 2 (Fmaj7)
+      32: 440.00, 34: 523.25, 36: 698.46, 38: 659.25, 40: 587.33, 42: 523.25, 44: 440.00, 46: 392.00,
+      // Bar 3 (G7)
+      48: 392.00, 50: 493.88, 52: 587.33, 54: 698.46, 56: 659.25, 58: 587.33, 60: 493.88, 62: 587.33,
+    };
+
+    const melFreq = melodyMap[step];
+    if (melFreq) {
+      try {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(melFreq, time);
+
+        gain.gain.setValueAtTime(0.11, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.22);
+
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(time);
+        osc.stop(time + 0.22);
+      } catch {
+        // Ignore
+      }
+    }
+
+    // 4. Soft Lo-Fi Percussion (Kick on 0 & 8, Shaker on even steps)
+    if (barStep === 0 || barStep === 8) {
+      try {
+        const kickOsc = this.ctx.createOscillator();
+        const kickGain = this.ctx.createGain();
+        kickOsc.type = 'sine';
+        kickOsc.frequency.setValueAtTime(75, time);
+        kickOsc.frequency.exponentialRampToValueAtTime(32, time + 0.08);
+
+        kickGain.gain.setValueAtTime(0.1, time);
+        kickGain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+
+        kickOsc.connect(kickGain);
+        kickGain.connect(master);
+        kickOsc.start(time);
+        kickOsc.stop(time + 0.08);
+      } catch {
+        // Ignore
+      }
+    }
+
+    // Light shaker on 8th notes
+    if (barStep % 2 === 0 && barStep !== 0 && barStep !== 8) {
+      try {
+        const bufferSize = Math.floor(this.ctx.sampleRate * 0.02);
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let j = 0; j < bufferSize; j++) {
+          data[j] = (Math.random() * 2 - 1) * Math.exp(-j / (bufferSize * 0.2));
+        }
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(4200, time);
+        filter.Q.setValueAtTime(2.0, time);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.028, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(master);
+        noise.start(time);
+      } catch {
+        // Ignore
+      }
+    }
   }
 
   /**

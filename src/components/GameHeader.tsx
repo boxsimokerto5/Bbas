@@ -1,5 +1,5 @@
 import React from 'react';
-import { Volume2, VolumeX, RotateCcw, HelpCircle, Trophy, Zap, Palette, Crown } from 'lucide-react';
+import { Volume2, VolumeX, RotateCcw, HelpCircle, Trophy, Zap, Palette, Crown, Music } from 'lucide-react';
 import { ThemeDef } from '../types/game';
 import { THEMES } from '../utils/themes';
 
@@ -7,9 +7,13 @@ interface GameHeaderProps {
   score: number;
   highScore: number;
   comboStreak: number;
-  isMuted: boolean;
+  isMuted?: boolean;
+  isSfxMuted?: boolean;
+  isBgmMuted?: boolean;
   theme?: ThemeDef;
-  onToggleMute: () => void;
+  onToggleMute?: () => void;
+  onToggleSfxMute?: () => void;
+  onToggleBgmMute?: () => void;
   onRestart: () => void;
   onOpenHelp: () => void;
   onOpenTheme: () => void;
@@ -21,9 +25,13 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   score,
   highScore,
   comboStreak,
-  isMuted,
+  isMuted = false,
+  isSfxMuted,
+  isBgmMuted = false,
   theme = THEMES.classic3d,
   onToggleMute,
+  onToggleSfxMute,
+  onToggleBgmMute,
   onRestart,
   onOpenHelp,
   onOpenTheme,
@@ -32,12 +40,14 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 }) => {
   const isLight = theme.isLight;
   const isClassic3D = theme.id === 'classic3d';
+  const effectiveSfxMuted = isSfxMuted !== undefined ? isSfxMuted : isMuted;
+  const handleToggleSfx = onToggleSfxMute || onToggleMute || (() => {});
 
   const btnClass = isLight
-    ? 'w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer shadow-sm active:scale-95 flex-shrink-0'
+    ? 'w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer shadow-sm active:scale-95 flex-shrink-0'
     : isClassic3D
-    ? 'w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg bg-blue-950/60 border border-blue-400/30 text-blue-100 hover:text-white hover:bg-blue-900/80 transition-colors flex items-center justify-center cursor-pointer shadow-sm backdrop-blur-sm active:scale-95 flex-shrink-0'
-    : 'w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer active:scale-95 flex-shrink-0';
+    ? 'w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-lg bg-blue-950/60 border border-blue-400/30 text-blue-100 hover:text-white hover:bg-blue-900/80 transition-colors flex items-center justify-center cursor-pointer shadow-sm backdrop-blur-sm active:scale-95 flex-shrink-0'
+    : 'w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer active:scale-95 flex-shrink-0';
 
   return (
     <header className="w-full max-w-md mx-auto flex flex-col gap-1 px-1.5 pt-0.5 pb-0.5 select-none flex-shrink-0">
@@ -74,7 +84,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
               aria-label="Buka prestasi dan rekor"
               className={`relative ${btnClass}`}
             >
-              <Trophy size={15} className={unclaimedAchievementsCount > 0 ? 'text-amber-400' : ''} />
+              <Trophy size={13.5} className={unclaimedAchievementsCount > 0 ? 'text-amber-400' : ''} />
               {unclaimedAchievementsCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-slate-900 animate-pulse" />
               )}
@@ -87,25 +97,49 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             aria-label="Pilih tema warna"
             className={btnClass}
           >
-            <Palette size={15} />
+            <Palette size={13.5} />
           </button>
 
           <button
             onClick={onOpenHelp}
-            title="Cara Bermain"
-            aria-label="Petunjuk bermain"
+            title="Cara Bermain & Pengaturan"
+            aria-label="Petunjuk bermain dan pengaturan suara"
             className={btnClass}
           >
-            <HelpCircle size={15} />
+            <HelpCircle size={13.5} />
           </button>
 
+          {/* Independent BGM Music Toggle */}
+          {onToggleBgmMute && (
+            <button
+              onClick={onToggleBgmMute}
+              title={isBgmMuted ? 'Nyalakan Musik Latar (BGM)' : 'Matikan Musik Latar (BGM)'}
+              aria-label={isBgmMuted ? 'Nyalakan Musik Latar' : 'Matikan Musik Latar'}
+              className={`${btnClass} relative ${
+                !isBgmMuted
+                  ? isLight
+                    ? 'text-indigo-600 bg-indigo-50 border-indigo-300 shadow-sm'
+                    : 'text-emerald-300 bg-emerald-950/60 border-emerald-400/40 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
+                  : 'opacity-50'
+              }`}
+            >
+              <Music size={13.5} className={!isBgmMuted ? 'animate-pulse' : ''} />
+              {isBgmMuted && (
+                <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-3.5 h-0.5 bg-rose-500 rotate-45 rounded-full" />
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Independent SFX Sound Effects Toggle */}
           <button
-            onClick={onToggleMute}
-            title={isMuted ? 'Nyalakan Suara' : 'Matikan Suara'}
-            aria-label={isMuted ? 'Nyalakan Suara' : 'Matikan Suara'}
-            className={btnClass}
+            onClick={handleToggleSfx}
+            title={effectiveSfxMuted ? 'Nyalakan Efek Suara (SFX)' : 'Matikan Efek Suara (SFX)'}
+            aria-label={effectiveSfxMuted ? 'Nyalakan Efek Suara' : 'Matikan Efek Suara'}
+            className={`${btnClass} ${effectiveSfxMuted ? 'opacity-50' : ''}`}
           >
-            {isMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
+            {effectiveSfxMuted ? <VolumeX size={13.5} /> : <Volume2 size={13.5} />}
           </button>
 
           <button
@@ -114,7 +148,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             aria-label="Mulai ulang game"
             className={btnClass}
           >
-            <RotateCcw size={15} />
+            <RotateCcw size={13.5} />
           </button>
         </div>
       </div>

@@ -1,17 +1,28 @@
 import React from 'react';
-import { X, Sparkles, Layers, Zap, WifiOff, Hammer } from 'lucide-react';
+import { X, Sparkles, Layers, Zap, WifiOff, Hammer, Music, Volume2, VolumeX } from 'lucide-react';
 
 interface InstructionsModalProps {
   isOpen: boolean;
+  isSfxMuted?: boolean;
+  isBgmMuted?: boolean;
+  onToggleSfxMute?: () => void;
+  onToggleBgmMute?: () => void;
   onClose: () => void;
 }
 
-export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, onClose }) => {
+export const InstructionsModal: React.FC<InstructionsModalProps> = ({
+  isOpen,
+  isSfxMuted = false,
+  isBgmMuted = false,
+  onToggleSfxMute,
+  onToggleBgmMute,
+  onClose,
+}) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="w-full max-w-sm rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 relative">
+      <div className="w-full max-w-sm rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-5 relative max-h-[90vh] overflow-y-auto">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -21,16 +32,69 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
           <X size={16} />
         </button>
 
-        <div className="mb-4">
+        <div className="mb-3.5">
           <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
-            Panduan Bermain
+            Pengaturan & Panduan
           </span>
-          <h3 className="font-display text-2xl font-bold text-white tracking-tight mt-0.5">
-            Cara Main Mini Blockblast
+          <h3 className="font-display text-xl font-bold text-white tracking-tight mt-0.5">
+            Pengaturan Mini Blockblast
           </h3>
         </div>
 
-        <div className="space-y-3.5 text-xs text-slate-300">
+        {/* Audio Settings Panel */}
+        <div className="mb-4 p-3 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex flex-col gap-2.5">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            Audio & Suara Permainan
+          </span>
+
+          <div className="grid grid-cols-2 gap-2">
+            {/* BGM Toggle */}
+            <button
+              onClick={onToggleBgmMute}
+              className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                !isBgmMuted
+                  ? 'bg-emerald-950/50 border-emerald-500/50 text-emerald-300 shadow-sm shadow-emerald-500/20'
+                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:bg-slate-850'
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                <Music size={16} className={!isBgmMuted ? 'text-emerald-400 animate-pulse' : 'text-slate-500'} />
+                <span className="text-xs font-bold text-white">Musik Latar</span>
+              </div>
+              <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
+                !isBgmMuted ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-500'
+              }`}>
+                {!isBgmMuted ? 'Aktif' : 'Mati'}
+              </span>
+            </button>
+
+            {/* SFX Toggle */}
+            <button
+              onClick={onToggleSfxMute}
+              className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                !isSfxMuted
+                  ? 'bg-indigo-950/50 border-indigo-500/50 text-indigo-300 shadow-sm shadow-indigo-500/20'
+                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:bg-slate-850'
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                {isSfxMuted ? (
+                  <VolumeX size={16} className="text-slate-500" />
+                ) : (
+                  <Volume2 size={16} className="text-indigo-400" />
+                )}
+                <span className="text-xs font-bold text-white">Efek Suara</span>
+              </div>
+              <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
+                !isSfxMuted ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-800 text-slate-500'
+              }`}>
+                {!isSfxMuted ? 'Aktif' : 'Mati'}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-3 text-xs text-slate-300">
           <div className="flex gap-3 items-start p-2.5 rounded-xl bg-slate-800/40 border border-slate-800/60">
             <div className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
               <Layers size={15} />
