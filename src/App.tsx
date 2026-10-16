@@ -161,16 +161,16 @@ export default function App() {
     const vWidth = window.innerWidth;
     const vHeight = window.innerHeight;
 
-    // Available board height considering header, combo meter, booster bar, tray, and paddings
-    const maxBoardWidth = Math.min(vWidth - 32, 430);
-    const maxBoardHeight = Math.min(vHeight - 370, 420);
-    const availableSize = Math.max(230, Math.min(maxBoardWidth, maxBoardHeight));
+    // Available board height considering compact header, combo meter, booster bar, tray, and paddings
+    const maxBoardWidth = Math.min(vWidth - 16, 440);
+    const maxBoardHeight = Math.min(vHeight - 225, 410);
+    const availableSize = Math.max(210, Math.min(maxBoardWidth, maxBoardHeight));
 
     // Cell size calculation: (size - inner paddings - gaps) / 8
-    const gapTotal = 7 * 5;
-    const paddingTotal = 24;
+    const gapTotal = 7 * 4;
+    const paddingTotal = 16;
     const computedCellSize = Math.floor((availableSize - gapTotal - paddingTotal) / BOARD_SIZE);
-    const clampedCell = Math.max(25, Math.min(computedCellSize, 45));
+    const clampedCell = Math.max(24, Math.min(computedCellSize, 48));
 
     setCellSize(clampedCell);
 
@@ -824,9 +824,9 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-screen w-full ${activeTheme.bgClass} ${
+      className={`h-[100dvh] max-h-[100dvh] w-full ${activeTheme.bgClass} ${
         activeTheme.isLight ? 'text-slate-900' : 'text-slate-100'
-      } flex flex-col items-center justify-between py-2 px-3 relative overflow-hidden select-none touch-none transition-colors duration-500`}
+      } flex flex-col items-center justify-between py-1 px-1.5 sm:py-2 sm:px-3 relative overflow-hidden select-none touch-none transition-colors duration-500`}
     >
       {/* Background ambient lighting */}
       <div
@@ -838,7 +838,7 @@ export default function App() {
 
       {/* Floating Booster Reward Toast */}
       {boosterToast && (
-        <div className="fixed top-16 z-50 px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white font-display font-black text-xs sm:text-sm shadow-xl shadow-amber-500/30 animate-in fade-in slide-in-from-top-4 duration-300 pointer-events-none">
+        <div className="fixed top-12 z-50 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white font-display font-black text-xs shadow-xl shadow-amber-500/30 animate-in fade-in slide-in-from-top-4 duration-300 pointer-events-none">
           {boosterToast.text}
         </div>
       )}
@@ -859,7 +859,7 @@ export default function App() {
       />
 
       {/* Main Play Area */}
-      <main className="w-full flex-1 flex flex-col items-center justify-center my-auto relative gap-2 sm:gap-2.5">
+      <main className="w-full flex-1 flex flex-col items-center justify-center my-auto relative gap-1.5 sm:gap-2">
         {/* Visual Combo Meter UI Element near the board */}
         <ComboMeter
           comboStreak={comboStreak}
@@ -954,10 +954,10 @@ export default function App() {
       </main>
 
       {/* Bottom Piece Tray */}
-      <footer className="w-full max-w-md mx-auto pb-2 px-1">
+      <footer className="w-full max-w-md mx-auto pb-1 px-0.5 flex-shrink-0">
         <div
-          className={`w-full ${activeTheme.trayBg} ${activeTheme.trayBorder} border rounded-3xl p-2.5 sm:p-3 flex items-center justify-around gap-2 transition-colors duration-300 ${
-            activeTheme.isLight ? 'shadow-lg shadow-slate-200/70' : 'shadow-xl'
+          className={`w-full ${activeTheme.trayBg} ${activeTheme.trayBorder} border rounded-2xl p-1.5 sm:p-2 flex items-center justify-around gap-1.5 transition-colors duration-300 ${
+            activeTheme.isLight ? 'shadow-md shadow-slate-200/70' : 'shadow-lg'
           }`}
         >
           {pieces.map((piece) => {
@@ -986,8 +986,8 @@ export default function App() {
           })}
         </div>
         <p
-          className={`text-center text-[11px] font-medium mt-2 ${
-            activeTheme.isLight ? 'text-slate-500' : 'text-slate-500'
+          className={`text-center text-[10px] font-medium mt-0.5 leading-tight ${
+            activeTheme.isLight ? 'text-slate-400' : 'text-slate-500'
           }`}
         >
           Tarik balok ke kisi 8x8 atau ketuk untuk memilih · 100% Offline

@@ -75,13 +75,13 @@ export const ComboMeter: React.FC<ComboMeterProps> = ({
 
   return (
     <div
-      className={`relative rounded-2xl ${theme.boardBg} ${theme.boardBorder} border px-3 py-2 transition-all duration-300 overflow-hidden select-none backdrop-blur-md ${
-        isMaxFever ? 'ring-2 ring-amber-400/60 shadow-[0_0_20px_rgba(245,158,11,0.3)]' : ''
+      className={`relative rounded-xl ${theme.boardBg} ${theme.boardBorder} border px-2.5 py-1 transition-all duration-300 overflow-hidden select-none backdrop-blur-md flex-shrink-0 ${
+        isMaxFever ? 'ring-1.5 ring-amber-400/60 shadow-[0_0_14px_rgba(245,158,11,0.25)]' : ''
       }`}
       style={{
         width: `${width}px`,
         maxWidth: '100%',
-        boxShadow: isCharging ? `0 4px 18px rgba(0,0,0,0.25)` : theme.boardShadow,
+        boxShadow: isCharging ? `0 2px 10px rgba(0,0,0,0.2)` : theme.boardShadow,
       }}
     >
       {/* Background ambient pulse for high combo */}
@@ -96,31 +96,31 @@ export const ComboMeter: React.FC<ComboMeterProps> = ({
       )}
 
       {/* Top Info Row */}
-      <div className="flex items-center justify-between gap-2 mb-1.5 relative z-10">
+      <div className="flex items-center justify-between gap-1.5 mb-1 relative z-10 leading-none">
         {/* Left: Dynamic Multiplier Badge */}
         <div className="flex items-center gap-1.5">
           <div
-            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg border text-xs font-black tracking-wide transition-all duration-300 ${badgeConfig.bg} ${badgeConfig.glow}`}
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[11px] font-black tracking-tight transition-all duration-300 ${badgeConfig.bg} ${badgeConfig.glow}`}
           >
             {isMaxFever ? (
-              <Flame size={13} className={`${badgeConfig.iconColor} animate-bounce`} />
+              <Flame size={12} className={`${badgeConfig.iconColor} animate-bounce`} />
             ) : isCharging ? (
-              <Zap size={12} className={badgeConfig.iconColor} />
+              <Zap size={11} className={badgeConfig.iconColor} />
             ) : (
-              <Sparkles size={11} className={badgeConfig.iconColor} />
+              <Sparkles size={10} className={badgeConfig.iconColor} />
             )}
             <span className="font-display tabular-nums tracking-tight">
               {multiplier.toFixed(1)}x
             </span>
             {isMaxFever && (
-              <span className="text-[10px] font-black uppercase tracking-wider ml-0.5 bg-black/40 px-1 py-0.2 rounded">
+              <span className="text-[9px] font-black uppercase tracking-wider ml-0.5 bg-black/40 px-1 py-0.2 rounded">
                 MAX
               </span>
             )}
           </div>
 
           <span
-            className={`text-[11px] font-bold uppercase tracking-wider transition-colors duration-300 ${
+            className={`text-[10px] font-bold uppercase tracking-wider transition-colors duration-300 ${
               isMaxFever
                 ? 'text-amber-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]'
                 : isCharging
@@ -132,15 +132,15 @@ export const ComboMeter: React.FC<ComboMeterProps> = ({
               ? 'Fever Mode!'
               : isCharging
               ? `Combo x${comboStreak}`
-              : 'Combo Meter'}
+              : 'Combo'}
           </span>
         </div>
 
         {/* Right: Score bonus incentive text */}
-        <div className="flex items-center gap-1 text-[11px] font-medium tracking-tight">
+        <div className="flex items-center gap-1 text-[10px] font-medium tracking-tight">
           {isCharging ? (
             <div className="flex items-center gap-1">
-              <TrendingUp size={12} className={isMaxFever ? 'text-amber-300' : 'text-emerald-400'} />
+              <TrendingUp size={11} className={isMaxFever ? 'text-amber-300' : 'text-emerald-400'} />
               <span
                 className={`font-bold tabular-nums ${
                   isMaxFever
@@ -148,14 +148,14 @@ export const ComboMeter: React.FC<ComboMeterProps> = ({
                     : isLight ? 'text-emerald-600' : 'text-emerald-400'
                 }`}
               >
-                {bonusPercentText} Skor
+                {bonusPercentText}
               </span>
-              <span className={`text-[10px] ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>
-                / langkah
+              <span className={`text-[9px] ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>
+                /langkah
               </span>
             </div>
           ) : (
-            <span className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span className={`text-[9px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
               Hancurkan baris beruntun
             </span>
           )}
@@ -163,7 +163,7 @@ export const ComboMeter: React.FC<ComboMeterProps> = ({
       </div>
 
       {/* 5-Segment Progressive Energy Bar */}
-      <div className="grid grid-cols-5 gap-1.5 relative z-10">
+      <div className="grid grid-cols-5 gap-1 relative z-10">
         {COMBO_TIERS.map((tierInfo: ComboTierInfo) => {
           const isFilled = comboStreak >= tierInfo.minStreak;
           const isCurrentActive =
@@ -174,7 +174,7 @@ export const ComboMeter: React.FC<ComboMeterProps> = ({
             <div key={tierInfo.tier} className="flex flex-col gap-0.5">
               {/* Segment Cell Track */}
               <div
-                className={`h-2.5 rounded-md relative overflow-hidden transition-all duration-300 ${
+                className={`h-1.5 sm:h-2 rounded-sm relative overflow-hidden transition-all duration-300 ${
                   isLight
                     ? 'bg-slate-200/90 border border-slate-300/80'
                     : 'bg-slate-950/80 border border-white/10'
@@ -186,7 +186,7 @@ export const ComboMeter: React.FC<ComboMeterProps> = ({
               >
                 {/* Segment Fill */}
                 <div
-                  className={`absolute inset-0 rounded-md transition-all duration-300 ${
+                  className={`absolute inset-0 rounded-sm transition-all duration-300 ${
                     isFilled
                       ? `bg-gradient-to-r ${tierInfo.glowColor} opacity-100`
                       : 'opacity-0 scale-x-0'
@@ -200,15 +200,14 @@ export const ComboMeter: React.FC<ComboMeterProps> = ({
                       : 'none',
                   }}
                 >
-                  {/* Glass Top Highlight */}
                   <div className="absolute inset-x-0 top-0 h-[45%] bg-white/40 pointer-events-none rounded-t" />
                 </div>
               </div>
 
               {/* Segment Micro-Label */}
-              <div className="flex items-center justify-between px-0.5">
+              <div className="flex items-center justify-between px-0.5 leading-none">
                 <span
-                  className={`text-[9px] font-bold tabular-nums transition-colors duration-200 ${
+                  className={`text-[8px] font-bold tabular-nums transition-colors duration-200 ${
                     isFilled
                       ? isLight ? 'text-slate-900' : 'text-slate-100'
                       : isLight ? 'text-slate-400' : 'text-slate-600'
@@ -217,7 +216,7 @@ export const ComboMeter: React.FC<ComboMeterProps> = ({
                   {tierInfo.label}
                 </span>
                 <span
-                  className={`text-[8px] font-medium transition-colors duration-200 hidden sm:inline ${
+                  className={`text-[7px] font-medium transition-colors duration-200 hidden sm:inline ${
                     isFilled
                       ? isLight ? 'text-slate-700' : 'text-slate-300'
                       : isLight ? 'text-slate-400' : 'text-slate-600'

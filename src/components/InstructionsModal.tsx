@@ -26,7 +26,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
             Panduan Bermain
           </span>
           <h3 className="font-display text-2xl font-bold text-white tracking-tight mt-0.5">
-            Cara Main Block Blast
+            Cara Main Mini Blockblast
           </h3>
         </div>
 

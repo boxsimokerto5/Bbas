@@ -77,14 +77,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   return (
     <div
       ref={boardRef}
-      className={`relative p-2.5 sm:p-3.5 rounded-3xl ${theme.boardBg} ${theme.boardBorder} border backdrop-blur-md transition-all duration-300 select-none touch-none ${shakeClass}`}
+      className={`relative p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl ${theme.boardBg} ${theme.boardBorder} border backdrop-blur-md transition-all duration-300 select-none touch-none ${shakeClass}`}
       style={{
         boxShadow: theme.boardShadow,
       }}
     >
       {/* Drop line clear energy beam indicators */}
       {hasProjectedClears && (
-        <div className="pointer-events-none absolute inset-2.5 sm:inset-3.5 z-10 overflow-hidden rounded-2xl">
+        <div className="pointer-events-none absolute inset-2 sm:inset-2.5 z-10 overflow-hidden rounded-2xl">
           {projectedClears.projectedRows.map((r) => (
             <div
               key={`proj-row-${r}`}

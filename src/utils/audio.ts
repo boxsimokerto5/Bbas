@@ -179,8 +179,167 @@ class SoundSystem {
         sOsc.start(sparkleTime);
         sOsc.stop(sparkleTime + 0.2);
       }
+
+      // 1. Suara tepuk tangan (applause) di setiap blast
+      this.playClap();
+
+      // 2. Jika 1 baris: suara tepuk tangan + sorak "Horeee!"
+      // 3. Jika lebih dari 1 baris (> 1): suara laki-laki besar berseru "Mini block blast!"
+      if (lines > 1) {
+        setTimeout(() => {
+          this.playMiniBlockBlastVoice();
+        }, 90);
+      } else {
+        setTimeout(() => {
+          this.playHoree();
+        }, 80);
+      }
     } catch {
       // Ignore
+    }
+  }
+
+  /**
+   * Suara tepuk tangan (applause claps) yang renyah dan meriah
+   */
+  public playClap(): void {
+    if (this.muted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const clapCount = 6;
+      for (let i = 0; i < clapCount; i++) {
+        const clapTime = now + i * 0.05 + Math.random() * 0.025;
+        const bufferSize = Math.floor(this.ctx.sampleRate * 0.035);
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let j = 0; j < bufferSize; j++) {
+          data[j] = (Math.random() * 2 - 1) * Math.exp(-j / (bufferSize * 0.25));
+        }
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        // Bandpass filter akustik tepuk tangan (~1100Hz)
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1050 + Math.random() * 250, clapTime);
+        filter.Q.setValueAtTime(2.2, clapTime);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.18, clapTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, clapTime + 0.035);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        noise.start(clapTime);
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  /**
+   * Suara sorak riang "Horeee!" saat blast 1 baris
+   */
+  public playHoree(): void {
+    if (this.muted) return;
+
+    // Harmonik nada riang naik
+    this.initContext();
+    if (this.ctx) {
+      try {
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(784, now + 0.12);
+        osc.frequency.exponentialRampToValueAtTime(987.77, now + 0.25);
+
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } catch {
+        // Ignore
+      }
+    }
+
+    // Suara vokal "Horeee!" via SpeechSynthesis
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance('Horeee!');
+        utter.lang = 'id-ID';
+        utter.pitch = 1.35; // Nada tinggi ceria
+        utter.rate = 1.25;  // Tempo cepat gembira
+        utter.volume = 0.95;
+        window.speechSynthesis.speak(utter);
+      } catch {
+        // Ignore
+      }
+    }
+  }
+
+  /**
+   * Suara laki-laki besar bertenaga berseru "Mini block blast!" saat > 1 baris hancur
+   */
+  public playMiniBlockBlastVoice(): void {
+    if (this.muted) return;
+
+    // Dentuman bass tebal menggelegar di Web Audio
+    this.initContext();
+    if (this.ctx) {
+      try {
+        const now = this.ctx.currentTime;
+        const subOsc = this.ctx.createOscillator();
+        const subGain = this.ctx.createGain();
+        subOsc.type = 'sine';
+        subOsc.frequency.setValueAtTime(115, now);
+        subOsc.frequency.exponentialRampToValueAtTime(42, now + 0.45);
+
+        subGain.gain.setValueAtTime(0.3, now);
+        subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+        subOsc.connect(subGain);
+        subGain.connect(this.ctx.destination);
+        subOsc.start(now);
+        subOsc.stop(now + 0.5);
+      } catch {
+        // Ignore
+      }
+    }
+
+    // Suara pria berwibawa & bernada rendah/berat (deep voice)
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance('Mini block blast!');
+        utter.pitch = 0.52; // Pitch rendah laki-laki besar (deep bass)
+        utter.rate = 0.88;  // Tempo artikulatif & berwibawa
+        utter.volume = 1.0;
+
+        // Cari suara pria jika tersedia di sistem browser
+        const voices = window.speechSynthesis.getVoices();
+        const maleVoice = voices.find((v) =>
+          /male|david|george|alex|daniel|guy|deep|id-id/i.test(v.name)
+        );
+        if (maleVoice) {
+          utter.voice = maleVoice;
+        }
+
+        window.speechSynthesis.speak(utter);
+      } catch {
+        // Ignore
+      }
     }
   }
 

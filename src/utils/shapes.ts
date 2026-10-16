@@ -519,7 +519,7 @@ export function calculateScore(
   // Title / Subtext for celebration
   let title = '';
   if (linesClearedCount === 1) title = 'BLAST!';
-  else if (linesClearedCount === 2) title = 'DOUBLE BLAST!';
+  else if (linesClearedCount === 2) title = 'MINI BLOCK BLAST!';
   else if (linesClearedCount === 3) title = 'TRIPLE BLAST!';
   else if (linesClearedCount >= 4) title = 'MEGA BLAST!';
 
