@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Sparkles, Layers, Zap, WifiOff } from 'lucide-react';
+import { X, Sparkles, Layers, Zap, WifiOff, Hammer } from 'lucide-react';
 
 interface InstructionsModalProps {
   isOpen: boolean;
@@ -36,9 +36,9 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
               <Layers size={15} />
             </div>
             <div>
-              <p className="font-bold text-white mb-0.5">1. Tempatkan Balok</p>
+              <p className="font-bold text-white mb-0.5">1. Tarik & Pratinjau Bayangan (Drop Preview)</p>
               <p className="text-slate-400 leading-relaxed">
-                Tarik balok dari nampan bawah ke kisi 8x8 (atau ketuk balok lalu ketuk kotak di papan).
+                Tarik balok ke papan. Bayangan balok (ghost preview) akan menempel magnetis ke posisi valid terdekat dan menyoroti garis yang akan meledak sebelum jari dilepas!
               </p>
             </div>
           </div>
@@ -68,13 +68,25 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
           </div>
 
           <div className="flex gap-3 items-start p-2.5 rounded-xl bg-slate-800/40 border border-slate-800/60">
+            <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 mt-0.5">
+              <Hammer size={15} />
+            </div>
+            <div>
+              <p className="font-bold text-white mb-0.5">4. Gunakan Booster Bantuan</p>
+              <p className="text-slate-400 leading-relaxed">
+                Manfaatkan Palu (hancurkan 1 kotak), Putar (ubah orientasi balok 90°), dan Acak (ganti balok baru). Dapatkan gratis dari kombo tinggi & misi prestasi!
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 items-start p-2.5 rounded-xl bg-slate-800/40 border border-slate-800/60">
             <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
               <WifiOff size={15} />
             </div>
             <div>
-              <p className="font-bold text-white mb-0.5">4. 100% Offline</p>
+              <p className="font-bold text-white mb-0.5">5. 100% Offline</p>
               <p className="text-slate-400 leading-relaxed">
-                Bisa dimainkan tanpa internet kapan saja. Skor tertinggi otomatis tersimpan di perangkat.
+                Bisa dimainkan tanpa internet kapan saja. Skor tertinggi dan statistik tersimpan permanen di perangkat.
               </p>
             </div>
           </div>

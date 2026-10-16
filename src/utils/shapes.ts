@@ -532,3 +532,125 @@ export function calculateScore(
 
   return { points, baseScore, multiplier, title, subtext };
 }
+
+/**
+ * Rotates a shape matrix 90 degrees clockwise
+ */
+export function rotateMatrixClockwise(matrix: number[][]): number[][] {
+  const rows = matrix.length;
+  const cols = matrix[0].length;
+  const result: number[][] = [];
+
+  for (let c = 0; c < cols; c++) {
+    const newRow: number[] = [];
+    for (let r = rows - 1; r >= 0; r--) {
+      newRow.push(matrix[r][c]);
+    }
+    result.push(newRow);
+  }
+  return result;
+}
+
+/**
+ * Finds the closest valid snap position on the board for a given shape matrix.
+ * If the exact rounded position is valid, returns it immediately.
+ * Otherwise searches all legal placements on the board and finds the closest
+ * position within the maxDistance threshold.
+ */
+export function findClosestValidSnapPosition(
+  board: BoardMatrix,
+  matrix: number[][],
+  rawRow: number,
+  rawCol: number,
+  maxDistanceThreshold: number = 3.2
+): { r: number; c: number; distance: number } | null {
+  const rows = matrix.length;
+  const cols = matrix[0].length;
+
+  const roundR = Math.max(0, Math.min(Math.round(rawRow), BOARD_SIZE - rows));
+  const roundC = Math.max(0, Math.min(Math.round(rawCol), BOARD_SIZE - cols));
+
+  // 1. Direct hit check
+  if (canPlaceShape(board, matrix, roundR, roundC)) {
+    return { r: roundR, c: roundC, distance: 0 };
+  }
+
+  // 2. Search all legal placements on the board for closest proximity
+  let bestPos: { r: number; c: number; distance: number } | null = null;
+  let minDistanceSq = maxDistanceThreshold * maxDistanceThreshold;
+
+  for (let r = 0; r <= BOARD_SIZE - rows; r++) {
+    for (let c = 0; c <= BOARD_SIZE - cols; c++) {
+      if (canPlaceShape(board, matrix, r, c)) {
+        const dR = r - rawRow;
+        const dC = c - rawCol;
+        const distSq = dR * dR + dC * dC;
+
+        if (distSq < minDistanceSq) {
+          minDistanceSq = distSq;
+          bestPos = { r, c, distance: Math.sqrt(distSq) };
+        }
+      }
+    }
+  }
+
+  return bestPos;
+}
+
+/**
+ * Predicts which rows and columns would be cleared if the shape is placed at (targetRow, targetCol)
+ */
+export function getProjectedLinesCleared(
+  board: BoardMatrix,
+  matrix: number[][],
+  targetRow: number,
+  targetCol: number
+): { projectedRows: number[]; projectedCols: number[] } {
+  const rows = matrix.length;
+  const cols = matrix[0].length;
+  const projectedRows: number[] = [];
+  const projectedCols: number[] = [];
+
+  if (!canPlaceShape(board, matrix, targetRow, targetCol)) {
+    return { projectedRows, projectedCols };
+  }
+
+  // Helper: check if a cell would be filled
+  const isCellFilled = (r: number, c: number): boolean => {
+    if (board[r][c] !== null) return true;
+    const relR = r - targetRow;
+    const relC = c - targetCol;
+    if (relR >= 0 && relR < rows && relC >= 0 && relC < cols) {
+      return matrix[relR][relC] === 1;
+    }
+    return false;
+  };
+
+  // Check rows
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    let full = true;
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (!isCellFilled(r, c)) {
+        full = false;
+        break;
+      }
+    }
+    if (full) projectedRows.push(r);
+  }
+
+  // Check columns
+  for (let c = 0; c < BOARD_SIZE; c++) {
+    let full = true;
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      if (!isCellFilled(r, c)) {
+        full = false;
+        break;
+      }
+    }
+    if (full) projectedCols.push(c);
+  }
+
+  return { projectedRows, projectedCols };
+}
+
+

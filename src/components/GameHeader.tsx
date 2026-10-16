@@ -13,6 +13,8 @@ interface GameHeaderProps {
   onRestart: () => void;
   onOpenHelp: () => void;
   onOpenTheme: () => void;
+  onOpenAchievements?: () => void;
+  unclaimedAchievementsCount?: number;
 }
 
 export const GameHeader: React.FC<GameHeaderProps> = ({
@@ -25,6 +27,8 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   onRestart,
   onOpenHelp,
   onOpenTheme,
+  onOpenAchievements,
+  unclaimedAchievementsCount = 0,
 }) => {
   const isLight = theme.isLight;
   const isClassic3D = theme.id === 'classic3d';
@@ -63,6 +67,20 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
         {/* Header action buttons */}
         <div className="flex items-center gap-1.5">
+          {onOpenAchievements && (
+            <button
+              onClick={onOpenAchievements}
+              title="Ruang Prestasi & Rekor"
+              aria-label="Buka prestasi dan rekor"
+              className={`relative ${btnClass}`}
+            >
+              <Trophy size={17} className={unclaimedAchievementsCount > 0 ? 'text-amber-400' : ''} />
+              {unclaimedAchievementsCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-slate-900 animate-pulse" />
+              )}
+            </button>
+          )}
+
           <button
             onClick={onOpenTheme}
             title="Ganti Tema Warna"

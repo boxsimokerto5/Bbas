@@ -1,10 +1,14 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   BoardMatrix,
   PlacedPiece,
   FloatingText,
   ThemeId,
   ThemeDef,
+  BoostersInventory,
+  BoosterType,
+  Achievement,
+  PlayerStats,
 } from './types/game';
 import {
   BOARD_SIZE,
@@ -16,17 +20,28 @@ import {
   calculateScore,
   hasAnyValidMove,
   getComboMultiplier,
+  rotateMatrixClockwise,
+  findClosestValidSnapPosition,
 } from './utils/shapes';
 import { sound } from './utils/audio';
+import { haptics } from './utils/haptics';
+import {
+  loadPlayerStats,
+  savePlayerStats,
+  loadAchievements,
+  saveAchievements,
+} from './utils/achievements';
 import { THEMES, DEFAULT_THEME_ID, getTheme } from './utils/themes';
 import { GameHeader } from './components/GameHeader';
 import { GameBoard } from './components/GameBoard';
 import { ComboMeter } from './components/ComboMeter';
+import { BoosterBar } from './components/BoosterBar';
 import { PieceTrayItem } from './components/PieceTrayItem';
 import { FloatingDragPiece } from './components/FloatingDragPiece';
 import { GameOverModal } from './components/GameOverModal';
 import { InstructionsModal } from './components/InstructionsModal';
 import { ThemeModal } from './components/ThemeModal';
+import { AchievementsModal } from './components/AchievementsModal';
 import { ParticleCanvas, ParticleCanvasHandle } from './components/ParticleCanvas';
 
 export default function App() {
@@ -70,6 +85,28 @@ export default function App() {
   const [isNewHighScore, setIsNewHighScore] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(() => sound.isMuted());
   const [showHelp, setShowHelp] = useState<boolean>(false);
+
+  // Boosters & Power-ups State
+  const [boosters, setBoosters] = useState<BoostersInventory>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('blockblast_boosters');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          // Ignore
+        }
+      }
+    }
+    return { hammer: 2, rotate: 2, reroll: 2 }; // Starter booster pack
+  });
+  const [isHammerMode, setIsHammerMode] = useState<boolean>(false);
+  const [boosterToast, setBoosterToast] = useState<{ text: string; id: number } | null>(null);
+
+  // Achievements & Player Statistics State
+  const [playerStats, setPlayerStats] = useState<PlayerStats>(() => loadPlayerStats());
+  const [achievements, setAchievements] = useState<Achievement[]>(() => loadAchievements());
+  const [showAchievementsModal, setShowAchievementsModal] = useState<boolean>(false);
 
   // FX animations state
   const [clearingRows, setClearingRows] = useState<number[]>([]);
@@ -124,16 +161,16 @@ export default function App() {
     const vWidth = window.innerWidth;
     const vHeight = window.innerHeight;
 
-    // Available board height considering header, combo meter, tray, and paddings
+    // Available board height considering header, combo meter, booster bar, tray, and paddings
     const maxBoardWidth = Math.min(vWidth - 32, 430);
-    const maxBoardHeight = Math.min(vHeight - 330, 420);
-    const availableSize = Math.max(240, Math.min(maxBoardWidth, maxBoardHeight));
+    const maxBoardHeight = Math.min(vHeight - 370, 420);
+    const availableSize = Math.max(230, Math.min(maxBoardWidth, maxBoardHeight));
 
     // Cell size calculation: (size - inner paddings - gaps) / 8
     const gapTotal = 7 * 5;
     const paddingTotal = 24;
     const computedCellSize = Math.floor((availableSize - gapTotal - paddingTotal) / BOARD_SIZE);
-    const clampedCell = Math.max(26, Math.min(computedCellSize, 46));
+    const clampedCell = Math.max(25, Math.min(computedCellSize, 45));
 
     setCellSize(clampedCell);
 
@@ -147,6 +184,218 @@ export default function App() {
     window.addEventListener('resize', updateLayoutDimensions);
     return () => window.removeEventListener('resize', updateLayoutDimensions);
   }, [updateLayoutDimensions]);
+
+  // Player Stats & Achievements Evaluator
+  const updatePlayerStatsAction = useCallback(
+    (delta: {
+      linesClearedInc?: number;
+      blocksPlacedInc?: number;
+      currentScore?: number;
+      currentCombo?: number;
+      totalBoostersUsedInc?: number;
+      gamePlayedInc?: boolean;
+    }) => {
+      setPlayerStats((prev) => {
+        const next: PlayerStats = {
+          gamesPlayed: prev.gamesPlayed + (delta.gamePlayedInc ? 1 : 0),
+          highScore: Math.max(prev.highScore, delta.currentScore ?? 0),
+          maxCombo: Math.max(prev.maxCombo, delta.currentCombo ?? 0),
+          totalLinesCleared: prev.totalLinesCleared + (delta.linesClearedInc ?? 0),
+          totalBlocksPlaced: prev.totalBlocksPlaced + (delta.blocksPlacedInc ?? 0),
+          totalBoostersUsed: prev.totalBoostersUsed + (delta.totalBoostersUsedInc ?? 0),
+        };
+        savePlayerStats(next);
+
+        // Evaluate achievements
+        setAchievements((currAchievements) => {
+          let hasChange = false;
+          const updated = currAchievements.map((ach) => {
+            let newCurrent = ach.current;
+            if (ach.id === 'first_blast') newCurrent = next.totalLinesCleared;
+            else if (ach.id === 'combo_3') newCurrent = Math.max(ach.current, delta.currentCombo ?? 0);
+            else if (ach.id === 'combo_5') newCurrent = Math.max(ach.current, delta.currentCombo ?? 0);
+            else if (ach.id === 'lines_50' || ach.id === 'lines_150') newCurrent = next.totalLinesCleared;
+            else if (ach.id === 'score_3000' || ach.id === 'score_8000') newCurrent = Math.max(ach.current, delta.currentScore ?? 0);
+            else if (ach.id === 'booster_5') newCurrent = next.totalBoostersUsed;
+
+            if (newCurrent !== ach.current) {
+              hasChange = true;
+              return {
+                ...ach,
+                current: newCurrent,
+                unlocked: newCurrent >= ach.target,
+              };
+            }
+            return ach;
+          });
+
+          if (hasChange) {
+            saveAchievements(updated);
+          }
+          return updated;
+        });
+
+        return next;
+      });
+    },
+    []
+  );
+
+  // Reward Booster helper with notification toast
+  const rewardBooster = useCallback((type: BoosterType, count: number, message: string) => {
+    setBoosters((prev) => {
+      const next = { ...prev, [type]: prev[type] + count };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('blockblast_boosters', JSON.stringify(next));
+      }
+      return next;
+    });
+
+    setBoosterToast({ text: message, id: Date.now() });
+    setTimeout(() => {
+      setBoosterToast((curr) => (curr && Date.now() - curr.id >= 2400 ? null : curr));
+    }, 2500);
+  }, []);
+
+  // Claim achievement reward
+  const handleClaimAchievement = useCallback(
+    (achievementId: string, rewardType: BoosterType, count: number) => {
+      sound.playAchievement();
+      haptics.light();
+
+      setAchievements((prev) => {
+        const next = prev.map((a) => (a.id === achievementId ? { ...a, claimed: true } : a));
+        saveAchievements(next);
+        return next;
+      });
+
+      const label = rewardType === 'hammer' ? 'Palu' : rewardType === 'rotate' ? 'Putar' : 'Acak';
+      rewardBooster(rewardType, count, `🏆 Prestasi Diklaim! +${count} ${label} Bantuan!`);
+    },
+    [rewardBooster]
+  );
+
+  // Unclaimed achievements count
+  const unclaimedAchievementsCount = useMemo(() => {
+    return achievements.filter((a) => a.current >= a.target && !a.claimed).length;
+  }, [achievements]);
+
+  // Booster handlers
+  const handleToggleHammer = useCallback(() => {
+    if (boosters.hammer <= 0 && !isHammerMode) return;
+    haptics.light();
+    setSelectedPiece(null);
+    setIsHammerMode((prev) => !prev);
+  }, [boosters.hammer, isHammerMode]);
+
+  const handleUseRotate = useCallback(() => {
+    if (boosters.rotate <= 0) return;
+    sound.playRotate();
+    haptics.rotate();
+
+    const updated = pieces.map((p) => {
+      if (p.isUsed) return p;
+      return {
+        ...p,
+        shape: {
+          ...p.shape,
+          matrix: rotateMatrixClockwise(p.shape.matrix),
+        },
+      };
+    });
+
+    setPieces(updated);
+    if (selectedPiece) {
+      setSelectedPiece({
+        ...selectedPiece,
+        shape: {
+          ...selectedPiece.shape,
+          matrix: rotateMatrixClockwise(selectedPiece.shape.matrix),
+        },
+      });
+    }
+
+    const nextBoosters = { ...boosters, rotate: boosters.rotate - 1 };
+    setBoosters(nextBoosters);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('blockblast_boosters', JSON.stringify(nextBoosters));
+    }
+
+    updatePlayerStatsAction({ totalBoostersUsedInc: 1 });
+
+    if (isGameOver && hasAnyValidMove(board, updated)) {
+      setIsGameOver(false);
+    }
+  }, [board, boosters, isGameOver, pieces, selectedPiece, updatePlayerStatsAction]);
+
+  const handleUseReroll = useCallback(() => {
+    if (boosters.reroll <= 0) return;
+    sound.playReroll();
+    haptics.reroll();
+
+    const fresh = generatePieceSet(roundNumber, activeTheme.colorDefs);
+    setPieces(fresh);
+    setSelectedPiece(null);
+
+    const nextBoosters = { ...boosters, reroll: boosters.reroll - 1 };
+    setBoosters(nextBoosters);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('blockblast_boosters', JSON.stringify(nextBoosters));
+    }
+
+    updatePlayerStatsAction({ totalBoostersUsedInc: 1 });
+
+    if (isGameOver && hasAnyValidMove(board, fresh)) {
+      setIsGameOver(false);
+    }
+  }, [activeTheme.colorDefs, board, boosters, isGameOver, roundNumber, updatePlayerStatsAction]);
+
+  const handleUseHammerOnCell = useCallback(
+    (r: number, c: number) => {
+      if (boosters.hammer <= 0) {
+        setIsHammerMode(false);
+        return;
+      }
+      const cellData = board[r][c];
+      if (!cellData) return;
+
+      sound.playHammer();
+      haptics.hammer();
+
+      const nextBoosters = { ...boosters, hammer: boosters.hammer - 1 };
+      setBoosters(nextBoosters);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('blockblast_boosters', JSON.stringify(nextBoosters));
+      }
+
+      updatePlayerStatsAction({ totalBoostersUsedInc: 1 });
+
+      if (boardContainerRef.current && particleCanvasRef.current) {
+        const rect = boardContainerRef.current.getBoundingClientRect();
+        const cellStep = (rect.width - 24) / BOARD_SIZE;
+        const colorKey = cellData.colorId || 'amber';
+        const colorDef = activeTheme.colorDefs[colorKey] || THEMES.jewel.colorDefs[colorKey];
+        const colorHex = colorDef.particleHex;
+        const cellCenterX = 12 + c * cellStep + cellStep / 2;
+        const cellCenterY = 12 + r * cellStep + cellStep / 2;
+        particleCanvasRef.current?.burst(cellCenterX, cellCenterY, colorHex, 20);
+      }
+
+      const nextBoard: BoardMatrix = board.map((row, rowIdx) =>
+        row.map((cell, colIdx) => (rowIdx === r && colIdx === c ? null : cell))
+      );
+      setBoard(nextBoard);
+      setIsHammerMode(false);
+
+      setShakeLevel('mild');
+      setTimeout(() => setShakeLevel('none'), 250);
+
+      if (isGameOver && hasAnyValidMove(nextBoard, pieces)) {
+        setIsGameOver(false);
+      }
+    },
+    [activeTheme.colorDefs, board, boosters, isGameOver, pieces, updatePlayerStatsAction]
+  );
 
   // Restart game
   const handleRestart = useCallback(() => {
@@ -163,8 +412,10 @@ export default function App() {
     setClearingCols([]);
     setSelectedPiece(null);
     setHoverPos(null);
+    setIsHammerMode(false);
     setDragState({ piece: null, clientX: 0, clientY: 0, isTouch: false });
-  }, [activeTheme.colorDefs]);
+    updatePlayerStatsAction({ gamePlayedInc: true });
+  }, [activeTheme.colorDefs, updatePlayerStatsAction]);
 
   // Toggle Mute
   const handleToggleMute = useCallback(() => {
@@ -197,8 +448,9 @@ export default function App() {
         return false;
       }
 
-      // 1. Play place sound
+      // 1. Play place sound and haptics
       sound.playPlace();
+      haptics.medium();
 
       // 2. Put piece on new board copy
       let blocksPlaced = 0;
@@ -243,12 +495,32 @@ export default function App() {
         setScore(nextScore);
         checkUpdateHighScore(nextScore);
 
-        // Sound & Screen Shake
+        // Sound, Haptics & Screen Shake
         sound.playClear(linesCount, nextCombo);
+        haptics.blast(linesCount);
+        haptics.combo(nextCombo);
+
         // Unique sound effect specifically for combo streak increase, distinct from placement sound
         setTimeout(() => {
           sound.playComboStreak(nextCombo);
         }, 80);
+
+        // Reward boosters on achievements / milestones
+        if (nextCombo === 3) {
+          rewardBooster('rotate', 1, '🔥 Kombo x3! Bonus +1 Putar Balok!');
+        } else if (nextCombo === 5) {
+          rewardBooster('hammer', 1, '⚡ FEVER MODE! Bonus +1 Palu Pemecah!');
+        } else if (linesCount >= 3) {
+          rewardBooster('reroll', 1, '💥 Triple Blast! Bonus +1 Acak Balok!');
+        }
+
+        // Record player stats
+        updatePlayerStatsAction({
+          linesClearedInc: linesCount,
+          blocksPlacedInc: blocksPlaced,
+          currentScore: nextScore,
+          currentCombo: nextCombo,
+        });
 
         const shake = linesCount >= 3 ? 'heavy' : 'mild';
         setShakeLevel(shake);
@@ -331,13 +603,29 @@ export default function App() {
         checkUpdateHighScore(nextScore);
         setBoard(nextBoard);
 
+        updatePlayerStatsAction({
+          blocksPlacedInc: blocksPlaced,
+          currentScore: nextScore,
+          currentCombo: 0,
+        });
+
         // Check if all 3 pieces used
         evaluateRoundEnd(nextBoard, updatedPieces);
       }
 
       return true;
     },
-    [board, pieces, comboStreak, maxCombo, score, activeTheme, checkUpdateHighScore]
+    [
+      board,
+      pieces,
+      comboStreak,
+      maxCombo,
+      score,
+      activeTheme,
+      checkUpdateHighScore,
+      rewardBooster,
+      updatePlayerStatsAction,
+    ]
   );
 
   // Evaluate if round is finished or if it's Game Over
@@ -371,28 +659,28 @@ export default function App() {
     }
   };
 
-  // Convert screen coordinates (clientX, clientY) to board grid cell (row, col)
+  // Convert screen coordinates (clientX, clientY) to closest valid board grid cell (row, col)
   const calculateSnappedGridPos = useCallback(
     (clientX: number, clientY: number, activePiece: PlacedPiece, isTouch: boolean) => {
       if (!boardContainerRef.current) return null;
       const rect = boardContainerRef.current.getBoundingClientRect();
 
       // On touch devices, elevate target position so finger doesn't obscure the piece
-      const touchOffsetY = isTouch ? 60 : 0;
+      const touchOffsetY = isTouch ? 64 : 0;
       const targetX = clientX;
       const targetY = clientY - touchOffsetY;
 
-      // Board padding is 12px sm / 10px xs
+      // Board padding is 14px sm / 10px xs
       const padding = 12;
       const innerWidth = rect.width - padding * 2;
       const innerHeight = rect.height - padding * 2;
 
-      // Check if within board bounds (with generous margin)
+      // Allow dragging comfortably over the board; if dragged away (e.g. back to tray), cancel preview
       if (
-        targetX < rect.left - 40 ||
-        targetX > rect.right + 40 ||
-        targetY < rect.top - 40 ||
-        targetY > rect.bottom + 40
+        targetX < rect.left - 50 ||
+        targetX > rect.right + 50 ||
+        targetY < rect.top - 50 ||
+        targetY > rect.bottom + 70
       ) {
         return null;
       }
@@ -411,16 +699,20 @@ export default function App() {
       const topLeftX = targetX - pieceWidthPx / 2;
       const topLeftY = targetY - pieceHeightPx / 2;
 
-      const col = Math.round((topLeftX - (rect.left + padding)) / cellStepX);
-      const row = Math.round((topLeftY - (rect.top + padding)) / cellStepY);
+      // Unrounded continuous coordinates on the board grid
+      const rawCol = (topLeftX - (rect.left + padding)) / cellStepX;
+      const rawRow = (topLeftY - (rect.top + padding)) / cellStepY;
 
-      // Clamp to valid range
-      const clampedR = Math.max(0, Math.min(row, BOARD_SIZE - pieceRows));
-      const clampedC = Math.max(0, Math.min(col, BOARD_SIZE - pieceCols));
+      // Magnetically find closest valid snap location within a generous 2.85-cell radius
+      const snapResult = findClosestValidSnapPosition(board, matrix, rawRow, rawCol, 2.85);
 
-      return { r: clampedR, c: clampedC };
+      if (snapResult) {
+        return { r: snapResult.r, c: snapResult.c };
+      }
+
+      return null;
     },
-    []
+    [board]
   );
 
   // Pointer Down on Tray Item
@@ -435,6 +727,7 @@ export default function App() {
     if (!canFit) return;
 
     sound.playPick();
+    haptics.light();
     const isTouch = e.pointerType === 'touch';
 
     setDragState({
@@ -467,13 +760,18 @@ export default function App() {
           dragState.piece,
           dragState.isTouch
         );
-        setHoverPos(snapped);
+        setHoverPos((prev) => {
+          if (snapped && (!prev || prev.r !== snapped.r || prev.c !== snapped.c)) {
+            haptics.snap();
+          }
+          return snapped;
+        });
       }
     };
 
     const handlePointerUp = () => {
       if (dragState.piece && hoverPos) {
-        // Attempt placement
+        // Attempt placement at the closest snapped valid position
         const success = handlePlacePiece(dragState.piece, hoverPos.r, hoverPos.c);
         if (!success) {
           // Deselect on invalid placement
@@ -498,17 +796,28 @@ export default function App() {
     };
   }, [dragState, hoverPos, calculateSnappedGridPos, handlePlacePiece]);
 
-  // Handle cell click on board (for click-to-place accessibility mode)
+  // Handle cell click on board (for click-to-place accessibility mode or Hammer booster)
   const handleCellClick = (r: number, c: number) => {
+    if (isHammerMode) {
+      if (board[r][c] !== null) {
+        handleUseHammerOnCell(r, c);
+      }
+      return;
+    }
+
     if (!selectedPiece || isGameOver) return;
     const { matrix } = selectedPiece.shape;
     const rows = matrix.length;
     const cols = matrix[0].length;
 
     // Adjust target row/col so clicked cell is top-left
-    if (r + rows <= BOARD_SIZE && c + cols <= BOARD_SIZE) {
-      if (canPlaceShape(board, matrix, r, c)) {
-        handlePlacePiece(selectedPiece, r, c);
+    if (r + rows <= BOARD_SIZE && c + cols <= BOARD_SIZE && canPlaceShape(board, matrix, r, c)) {
+      handlePlacePiece(selectedPiece, r, c);
+    } else {
+      // Find closest valid placement near clicked cell
+      const snap = findClosestValidSnapPosition(board, matrix, r, c, 2.0);
+      if (snap) {
+        handlePlacePiece(selectedPiece, snap.r, snap.c);
       }
     }
   };
@@ -527,6 +836,13 @@ export default function App() {
         className={`pointer-events-none absolute -bottom-40 left-1/2 -translate-x-1/2 w-[500px] h-[350px] bg-gradient-to-t ${activeTheme.ambientBottom} blur-3xl rounded-full transition-all duration-500`}
       />
 
+      {/* Floating Booster Reward Toast */}
+      {boosterToast && (
+        <div className="fixed top-16 z-50 px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white font-display font-black text-xs sm:text-sm shadow-xl shadow-amber-500/30 animate-in fade-in slide-in-from-top-4 duration-300 pointer-events-none">
+          {boosterToast.text}
+        </div>
+      )}
+
       {/* Top Header */}
       <GameHeader
         score={score}
@@ -538,6 +854,8 @@ export default function App() {
         onRestart={handleRestart}
         onOpenHelp={() => setShowHelp(true)}
         onOpenTheme={() => setShowThemeModal(true)}
+        onOpenAchievements={() => setShowAchievementsModal(true)}
+        unclaimedAchievementsCount={unclaimedAchievementsCount}
       />
 
       {/* Main Play Area */}
@@ -570,6 +888,7 @@ export default function App() {
             shakeLevel={shakeLevel}
             boardRef={boardContainerRef}
             theme={activeTheme}
+            isHammerMode={isHammerMode}
             onCellClick={handleCellClick}
           />
 
@@ -620,6 +939,18 @@ export default function App() {
             </div>
           ))}
         </div>
+
+        {/* Interactive Booster Tools Bar */}
+        <BoosterBar
+          inventory={boosters}
+          isHammerMode={isHammerMode}
+          theme={activeTheme}
+          onToggleHammer={handleToggleHammer}
+          onUseRotate={handleUseRotate}
+          onUseReroll={handleUseReroll}
+          onOpenAchievements={() => setShowAchievementsModal(true)}
+          unclaimedAchievementsCount={unclaimedAchievementsCount}
+        />
       </main>
 
       {/* Bottom Piece Tray */}
@@ -698,6 +1029,16 @@ export default function App() {
         activeThemeId={activeThemeId}
         onSelectTheme={handleSelectTheme}
         onClose={() => setShowThemeModal(false)}
+      />
+
+      {/* Achievements & Player Stats Modal */}
+      <AchievementsModal
+        isOpen={showAchievementsModal}
+        achievements={achievements}
+        stats={playerStats}
+        theme={activeTheme}
+        onClose={() => setShowAchievementsModal(false)}
+        onClaimReward={handleClaimAchievement}
       />
     </div>
   );

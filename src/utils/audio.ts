@@ -401,6 +401,150 @@ class SoundSystem {
       // Ignore if audio context suspended
     }
   }
+
+  /**
+   * Heavy crunch sound when breaking a block with the Hammer booster
+   */
+  public playHammer(): void {
+    if (this.muted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+
+      // Heavy metal/stone impact
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(45, now + 0.14);
+
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.18);
+
+      // Glass smash high ping
+      const shatter = this.ctx.createOscillator();
+      const shatterGain = this.ctx.createGain();
+      shatter.type = 'triangle';
+      shatter.frequency.setValueAtTime(950, now);
+      shatter.frequency.exponentialRampToValueAtTime(1400, now + 0.08);
+
+      shatterGain.gain.setValueAtTime(0.12, now);
+      shatterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+      shatter.connect(shatterGain);
+      shatterGain.connect(this.ctx.destination);
+      shatter.start(now);
+      shatter.stop(now + 0.15);
+    } catch {
+      // Ignore
+    }
+  }
+
+  /**
+   * Aerodynamic whoosh when rotating pieces
+   */
+  public playRotate(): void {
+    if (this.muted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.exponentialRampToValueAtTime(620, now + 0.05);
+      osc.frequency.exponentialRampToValueAtTime(440, now + 0.11);
+
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.11);
+    } catch {
+      // Ignore
+    }
+  }
+
+  /**
+   * Crisp shuffle clicks when rerolling tray pieces
+   */
+  public playReroll(): void {
+    if (this.muted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const pitches = [420, 560, 720];
+
+      pitches.forEach((freq, idx) => {
+        if (!this.ctx) return;
+        const clickTime = now + idx * 0.045;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, clickTime);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.8, clickTime + 0.04);
+
+        gain.gain.setValueAtTime(0.12, clickTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, clickTime + 0.04);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(clickTime);
+        osc.stop(clickTime + 0.04);
+      });
+    } catch {
+      // Ignore
+    }
+  }
+
+  /**
+   * Fanfare chime when unlocking an achievement
+   */
+  public playAchievement(): void {
+    if (this.muted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
+
+      notes.forEach((freq, idx) => {
+        if (!this.ctx) return;
+        const time = now + idx * 0.07;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, time);
+
+        gain.gain.setValueAtTime(0.14, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.28);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(time);
+        osc.stop(time + 0.28);
+      });
+    } catch {
+      // Ignore
+    }
+  }
 }
 
 export const sound = new SoundSystem();

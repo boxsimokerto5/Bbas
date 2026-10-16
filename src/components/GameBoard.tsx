@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { BoardMatrix, ColorId, PlacedPiece, ThemeDef } from '../types/game';
 import { BlockCell } from './BlockCell';
-import { BOARD_SIZE, canPlaceShape } from '../utils/shapes';
+import { BOARD_SIZE, canPlaceShape, getProjectedLinesCleared } from '../utils/shapes';
 import { THEMES } from '../utils/themes';
 
 interface GameBoardProps {
@@ -14,6 +14,7 @@ interface GameBoardProps {
   shakeLevel: 'none' | 'mild' | 'heavy';
   boardRef: React.RefObject<HTMLDivElement | null>;
   theme?: ThemeDef;
+  isHammerMode?: boolean;
   onCellClick?: (r: number, c: number) => void;
 }
 
@@ -27,6 +28,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   shakeLevel,
   boardRef,
   theme = THEMES.jewel,
+  isHammerMode = false,
   onCellClick,
 }) => {
   // Determine if a cell is currently part of the ghost preview
@@ -56,6 +58,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     return clearingRows.includes(r) || clearingCols.includes(c);
   };
 
+  // Real-time projection of which lines will clear if dropped at current hoverPos
+  const projectedClears = useMemo(() => {
+    if (!activePiece || !hoverPos) return { projectedRows: [], projectedCols: [] };
+    return getProjectedLinesCleared(board, activePiece.shape.matrix, hoverPos.r, hoverPos.c);
+  }, [board, activePiece, hoverPos]);
+
+  const hasProjectedClears =
+    projectedClears.projectedRows.length > 0 || projectedClears.projectedCols.length > 0;
+
   const shakeClass =
     shakeLevel === 'heavy'
       ? 'animate-shake-heavy'
@@ -71,8 +82,34 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         boxShadow: theme.boardShadow,
       }}
     >
+      {/* Drop line clear energy beam indicators */}
+      {hasProjectedClears && (
+        <div className="pointer-events-none absolute inset-2.5 sm:inset-3.5 z-10 overflow-hidden rounded-2xl">
+          {projectedClears.projectedRows.map((r) => (
+            <div
+              key={`proj-row-${r}`}
+              className="absolute inset-x-0 h-[12%] bg-gradient-to-r from-transparent via-white/20 to-transparent blur-[1px] animate-pulse"
+              style={{
+                top: `${(r / BOARD_SIZE) * 100}%`,
+                height: `${(1 / BOARD_SIZE) * 100}%`,
+              }}
+            />
+          ))}
+          {projectedClears.projectedCols.map((c) => (
+            <div
+              key={`proj-col-${c}`}
+              className="absolute inset-y-0 w-[12%] bg-gradient-to-b from-transparent via-white/20 to-transparent blur-[1px] animate-pulse"
+              style={{
+                left: `${(c / BOARD_SIZE) * 100}%`,
+                width: `${(1 / BOARD_SIZE) * 100}%`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       <div
-        className="grid gap-1 sm:gap-1.5"
+        className="grid gap-1 sm:gap-1.5 relative z-10"
         style={{
           gridTemplateColumns: `repeat(${BOARD_SIZE}, ${cellSize}px)`,
           gridTemplateRows: `repeat(${BOARD_SIZE}, ${cellSize}px)`,
@@ -82,22 +119,32 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           row.map((cell, c) => {
             const isGhost = isGhostCell(r, c);
             const isClearing = isClearingCell(r, c);
+            const isProjectedClear =
+              projectedClears.projectedRows.includes(r) || projectedClears.projectedCols.includes(c);
             const colorId: ColorId | null = cell ? cell.colorId : null;
 
             return (
               <div
                 key={`${r}-${c}`}
                 onClick={() => onCellClick && onCellClick(r, c)}
-                className="cursor-pointer"
+                className={`relative cursor-pointer transition-transform duration-150 ${
+                  isHammerMode && cell
+                    ? 'hover:scale-105 hover:ring-2 hover:ring-amber-400 hover:ring-offset-1 hover:ring-offset-slate-900 rounded-lg cursor-crosshair z-20'
+                    : ''
+                }`}
               >
                 <BlockCell
                   colorId={colorId}
                   isGhost={isGhost}
                   ghostColorId={activePiece?.shape.colorId}
                   isClearing={isClearing}
+                  isProjectedClear={isProjectedClear}
                   cellSize={cellSize}
                   theme={theme}
                 />
+                {isHammerMode && cell && (
+                  <div className="pointer-events-none absolute inset-0 rounded-lg border border-amber-400/50 bg-amber-500/15 animate-pulse" />
+                )}
               </div>
             );
           })

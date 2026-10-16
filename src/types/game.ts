@@ -89,12 +89,32 @@ export interface FloatingText {
   multiplier?: number;
 }
 
-export interface GameStats {
-  score: number;
+export interface BoostersInventory {
+  hammer: number;
+  rotate: number;
+  reroll: number;
+}
+
+export type BoosterType = 'hammer' | 'rotate' | 'reroll';
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  target: number;
+  current: number;
+  unlocked: boolean;
+  rewardType: BoosterType;
+  rewardCount: number;
+  claimed: boolean;
+}
+
+export interface PlayerStats {
+  gamesPlayed: number;
   highScore: number;
-  comboStreak: number;
   maxCombo: number;
   totalLinesCleared: number;
-  blocksPlaced: number;
-  gamesPlayed: number;
+  totalBlocksPlaced: number;
+  totalBoostersUsed: number;
 }
+
