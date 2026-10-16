@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.boxsimokerto.blockblast"
+    namespace = "com.miniblockblast.gecckocreator"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.boxsimokerto.blockblast"
+        applicationId "com.miniblockblast.gecckocreator"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

@@ -1,4 +1,4 @@
-package com.boxsimokerto.blockblast;
+package com.miniblockblast.gecckocreator;
 
 import com.getcapacitor.BridgeActivity;
 

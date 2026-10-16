@@ -1,6 +1,6 @@
 {
-  "appId": "com.boxsimokerto.blockblast",
-  "appName": "Block Blast Offline",
+  "appId": "com.miniblockblast.gecckocreator",
+  "appName": "Mini Blockblast",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {
