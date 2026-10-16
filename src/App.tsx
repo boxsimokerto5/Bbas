@@ -15,11 +15,13 @@ import {
   findFullLines,
   calculateScore,
   hasAnyValidMove,
+  getComboMultiplier,
 } from './utils/shapes';
 import { sound } from './utils/audio';
 import { THEMES, DEFAULT_THEME_ID, getTheme } from './utils/themes';
 import { GameHeader } from './components/GameHeader';
 import { GameBoard } from './components/GameBoard';
+import { ComboMeter } from './components/ComboMeter';
 import { PieceTrayItem } from './components/PieceTrayItem';
 import { FloatingDragPiece } from './components/FloatingDragPiece';
 import { GameOverModal } from './components/GameOverModal';
@@ -122,16 +124,16 @@ export default function App() {
     const vWidth = window.innerWidth;
     const vHeight = window.innerHeight;
 
-    // Available board height considering header, tray, and paddings
+    // Available board height considering header, combo meter, tray, and paddings
     const maxBoardWidth = Math.min(vWidth - 32, 430);
-    const maxBoardHeight = Math.min(vHeight - 270, 430);
-    const availableSize = Math.max(260, Math.min(maxBoardWidth, maxBoardHeight));
+    const maxBoardHeight = Math.min(vHeight - 330, 420);
+    const availableSize = Math.max(240, Math.min(maxBoardWidth, maxBoardHeight));
 
     // Cell size calculation: (size - inner paddings - gaps) / 8
     const gapTotal = 7 * 5;
     const paddingTotal = 24;
     const computedCellSize = Math.floor((availableSize - gapTotal - paddingTotal) / BOARD_SIZE);
-    const clampedCell = Math.max(28, Math.min(computedCellSize, 48));
+    const clampedCell = Math.max(26, Math.min(computedCellSize, 46));
 
     setCellSize(clampedCell);
 
@@ -235,14 +237,19 @@ export default function App() {
         }
         setLinesCleared((prev) => prev + linesCount);
 
-        // Calculate score
-        const { points, title, subtext } = calculateScore(blocksPlaced, linesCount, nextCombo);
+        // Calculate score with multiplier
+        const { points, multiplier, title, subtext } = calculateScore(blocksPlaced, linesCount, nextCombo);
         const nextScore = score + points;
         setScore(nextScore);
         checkUpdateHighScore(nextScore);
 
         // Sound & Screen Shake
         sound.playClear(linesCount, nextCombo);
+        // Unique sound effect specifically for combo streak increase, distinct from placement sound
+        setTimeout(() => {
+          sound.playComboStreak(nextCombo);
+        }, 80);
+
         const shake = linesCount >= 3 ? 'heavy' : 'mild';
         setShakeLevel(shake);
         setTimeout(() => setShakeLevel('none'), 300);
@@ -291,6 +298,7 @@ export default function App() {
             x: 50,
             y: 40,
             comboCount: nextCombo,
+            multiplier,
           },
         ]);
         setTimeout(() => {
@@ -533,7 +541,16 @@ export default function App() {
       />
 
       {/* Main Play Area */}
-      <main className="w-full flex-1 flex flex-col items-center justify-center my-auto relative">
+      <main className="w-full flex-1 flex flex-col items-center justify-center my-auto relative gap-2 sm:gap-2.5">
+        {/* Visual Combo Meter UI Element near the board */}
+        <ComboMeter
+          comboStreak={comboStreak}
+          multiplier={getComboMultiplier(comboStreak)}
+          maxCombo={maxCombo}
+          theme={activeTheme}
+          width={boardDimensions.width}
+        />
+
         <div className="relative flex items-center justify-center">
           {/* 60fps Particle Canvas Overlay */}
           <ParticleCanvas
@@ -556,7 +573,7 @@ export default function App() {
             onCellClick={handleCellClick}
           />
 
-          {/* Floating Combo / Blast Feedback Popup matching screenshot */}
+          {/* Floating Combo / Blast Feedback Popup */}
           {floatingTexts.map((ft) => (
             <div
               key={ft.id}
@@ -570,22 +587,27 @@ export default function App() {
               {ft.comboCount > 1 ? (
                 <>
                   <div className="flex items-baseline gap-1.5 filter drop-shadow-xl">
-                    <span className="font-display font-black text-3xl sm:text-4xl text-white drop-shadow-[0_3px_0_#0f2b6b] italic tracking-tight">
+                    <span className="font-display font-black text-2xl sm:text-3xl text-white drop-shadow-[0_3px_0_#0f2b6b] italic tracking-tight">
                       Combo
                     </span>
-                    <span className="font-display font-black text-5xl sm:text-6xl text-pink-300 drop-shadow-[0_4px_0_#9d174d] tracking-tight ml-1 animate-pulse">
+                    <span className="font-display font-black text-4xl sm:text-5xl text-pink-300 drop-shadow-[0_4px_0_#9d174d] tracking-tight ml-0.5 animate-pulse">
                       {ft.comboCount}
                     </span>
+                    {ft.multiplier && ft.multiplier > 1.0 && (
+                      <span className="font-display font-black text-xl sm:text-2xl text-amber-300 drop-shadow-[0_2px_0_#78350f] tracking-tight ml-1 px-1.5 py-0.5 rounded-md bg-amber-500/25 border border-amber-400/40">
+                        {ft.multiplier.toFixed(1)}x
+                      </span>
+                    )}
                   </div>
                   {ft.text && (
-                    <span className="font-display font-black text-sm sm:text-base text-amber-300 drop-shadow-[0_2px_0_#78350f] uppercase tracking-wider mt-0.5">
+                    <span className="font-display font-black text-xs sm:text-sm text-amber-300 drop-shadow-[0_2px_0_#78350f] uppercase tracking-wider mt-0.5">
                       {ft.text} (+{ft.points})
                     </span>
                   )}
                 </>
               ) : (
                 <>
-                  <span className="font-display font-black text-3xl sm:text-4xl text-amber-300 drop-shadow-[0_3px_0_#78350f] tracking-wider">
+                  <span className="font-display font-black text-2xl sm:text-3xl text-amber-300 drop-shadow-[0_3px_0_#78350f] tracking-wider">
                     {ft.text}
                   </span>
                   {ft.points > 0 && (

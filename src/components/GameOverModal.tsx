@@ -1,5 +1,6 @@
 import React from 'react';
-import { Trophy, Zap, RotateCcw, Flame, CheckCircle2 } from 'lucide-react';
+import { Trophy, Zap, RotateCcw, Flame, CheckCircle2, TrendingUp } from 'lucide-react';
+import { getComboMultiplier } from '../utils/shapes';
 
 interface GameOverModalProps {
   score: number;
@@ -54,23 +55,33 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         </div>
 
         {/* Stats grid */}
-        <div className="w-full grid grid-cols-2 gap-2 mb-6">
-          <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800/60 flex flex-col items-center">
-            <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-400">
-              <Flame size={12} className="text-amber-400" />
-              <span>Kombo Maks</span>
+        <div className="w-full grid grid-cols-3 gap-2 mb-6">
+          <div className="p-2.5 rounded-xl bg-slate-800/40 border border-slate-800/60 flex flex-col items-center">
+            <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-400">
+              <Flame size={11} className="text-amber-400" />
+              <span>Kombo</span>
             </div>
-            <span className="font-display text-xl font-bold text-white tabular-nums mt-0.5">
+            <span className="font-display text-lg sm:text-xl font-bold text-white tabular-nums mt-0.5">
               {maxCombo > 0 ? `x${maxCombo}` : '-'}
             </span>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800/60 flex flex-col items-center">
-            <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-400">
-              <Zap size={12} className="text-cyan-400" />
-              <span>Garis Dihancurkan</span>
+          <div className="p-2.5 rounded-xl bg-slate-800/40 border border-slate-800/60 flex flex-col items-center">
+            <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-400">
+              <TrendingUp size={11} className="text-emerald-400" />
+              <span>Multiplier</span>
             </div>
-            <span className="font-display text-xl font-bold text-white tabular-nums mt-0.5">
+            <span className="font-display text-lg sm:text-xl font-bold text-emerald-400 tabular-nums mt-0.5">
+              {maxCombo > 0 ? `${getComboMultiplier(maxCombo).toFixed(1)}x` : '1.0x'}
+            </span>
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-slate-800/40 border border-slate-800/60 flex flex-col items-center">
+            <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-400">
+              <Zap size={11} className="text-cyan-400" />
+              <span>Garis</span>
+            </div>
+            <span className="font-display text-lg sm:text-xl font-bold text-white tabular-nums mt-0.5">
               {linesCleared}
             </span>
           </div>

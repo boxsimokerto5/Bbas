@@ -254,6 +254,153 @@ class SoundSystem {
       // Ignore
     }
   }
+
+  /**
+   * Sound when combo multiplier increases or charges up
+   */
+  public playMultiplierSurge(multiplier: number): void {
+    if (this.muted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const isMax = multiplier >= 5.0;
+
+      // Scale notes based on multiplier level
+      const chord = isMax
+        ? [523.25, 659.25, 783.99, 1046.5, 1318.51] // C5 E5 G5 C6 E6 fever
+        : multiplier >= 3.0
+        ? [392.0, 493.88, 587.33, 783.99] // G4 B4 D5 G5
+        : [329.63, 440.0, 523.25]; // E4 A4 C5
+
+      chord.forEach((freq, idx) => {
+        if (!this.ctx) return;
+        const noteTime = now + idx * 0.05;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = isMax ? 'sawtooth' : 'triangle';
+        osc.frequency.setValueAtTime(freq, noteTime);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.05, noteTime + 0.22);
+
+        gain.gain.setValueAtTime(isMax ? 0.09 : 0.07, noteTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.25);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(noteTime);
+        osc.stop(noteTime + 0.25);
+      });
+    } catch {
+      // Ignore
+    }
+  }
+
+  /**
+   * Unique sound effect that triggers specifically when the combo streak increases.
+   * Completely distinct from the low thud of block placement:
+   * Uses an energetic rising power glissando + dual detuned harmonic crystal bells
+   * that climb in frequency and brilliance with each consecutive combo!
+   */
+  public playComboStreak(streak: number): void {
+    if (this.muted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+
+      // Base pitch climbs with streak (G4 up through C6 and above)
+      const streakIndex = Math.min(Math.max(streak, 1), 6);
+      const rootFrequencies = [0, 659.25, 783.99, 880.0, 987.77, 1046.5, 1318.51];
+      const baseFreq = rootFrequencies[streakIndex] || 880.0;
+      const targetFreq = baseFreq * 1.333; // Ascending musical fourth/fifth interval
+
+      // 1. Rising Power Glissando / Arcade Streak Surge (completely unlike placement thud)
+      const riserOsc = this.ctx.createOscillator();
+      const riserGain = this.ctx.createGain();
+
+      riserOsc.type = 'sine';
+      riserOsc.frequency.setValueAtTime(baseFreq * 0.72, now);
+      riserOsc.frequency.exponentialRampToValueAtTime(targetFreq * 1.15, now + 0.12);
+
+      riserGain.gain.setValueAtTime(0.001, now);
+      riserGain.gain.linearRampToValueAtTime(0.12, now + 0.025);
+      riserGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+      riserOsc.connect(riserGain);
+      riserGain.connect(this.ctx.destination);
+
+      riserOsc.start(now);
+      riserOsc.stop(now + 0.18);
+
+      // 2. Crystal Ding / Bell impact (Twin detuned oscillators for lush chorus sparkle)
+      const detunes = [-7, 7];
+      detunes.forEach((cents) => {
+        if (!this.ctx) return;
+        const bellOsc = this.ctx.createOscillator();
+        const bellGain = this.ctx.createGain();
+
+        bellOsc.type = 'triangle';
+        bellOsc.frequency.setValueAtTime(targetFreq, now + 0.075);
+        bellOsc.detune.setValueAtTime(cents, now + 0.075);
+
+        bellGain.gain.setValueAtTime(0.001, now + 0.075);
+        bellGain.gain.linearRampToValueAtTime(0.14, now + 0.09);
+        bellGain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
+
+        bellOsc.connect(bellGain);
+        bellGain.connect(this.ctx.destination);
+
+        bellOsc.start(now + 0.075);
+        bellOsc.stop(now + 0.36);
+      });
+
+      // 3. High harmonic sparkle for streaks >= 2
+      if (streak >= 2) {
+        const sparkleOsc = this.ctx.createOscillator();
+        const sparkleGain = this.ctx.createGain();
+
+        sparkleOsc.type = 'sine';
+        sparkleOsc.frequency.setValueAtTime(targetFreq * 2, now + 0.11);
+        sparkleOsc.frequency.exponentialRampToValueAtTime(targetFreq * 2.5, now + 0.26);
+
+        sparkleGain.gain.setValueAtTime(0.001, now + 0.11);
+        sparkleGain.gain.linearRampToValueAtTime(0.08, now + 0.13);
+        sparkleGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+        sparkleOsc.connect(sparkleGain);
+        sparkleGain.connect(this.ctx.destination);
+
+        sparkleOsc.start(now + 0.11);
+        sparkleOsc.stop(now + 0.3);
+      }
+
+      // 4. Extra Fever cascade for streak >= 4
+      if (streak >= 4) {
+        const feverOsc = this.ctx.createOscillator();
+        const feverGain = this.ctx.createGain();
+
+        feverOsc.type = 'sine';
+        feverOsc.frequency.setValueAtTime(targetFreq * 1.5, now + 0.15);
+        feverOsc.frequency.exponentialRampToValueAtTime(targetFreq * 3, now + 0.34);
+
+        feverGain.gain.setValueAtTime(0.001, now + 0.15);
+        feverGain.gain.linearRampToValueAtTime(0.09, now + 0.18);
+        feverGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+        feverOsc.connect(feverGain);
+        feverGain.connect(this.ctx.destination);
+
+        feverOsc.start(now + 0.15);
+        feverOsc.stop(now + 0.4);
+      }
+    } catch {
+      // Ignore if audio context suspended
+    }
+  }
 }
 
 export const sound = new SoundSystem();

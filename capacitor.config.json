@@ -1,0 +1,9 @@
+{
+  "appId": "com.boxsimokerto.blockblast",
+  "appName": "Block Blast Offline",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

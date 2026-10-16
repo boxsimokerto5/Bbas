@@ -86,6 +86,7 @@ export interface FloatingText {
   x: number;
   y: number;
   comboCount: number;
+  multiplier?: number;
 }
 
 export interface GameStats {

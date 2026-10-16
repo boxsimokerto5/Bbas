@@ -60,9 +60,9 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
               <Zap size={15} />
             </div>
             <div>
-              <p className="font-bold text-white mb-0.5">3. Pertahankan Combo!</p>
+              <p className="font-bold text-white mb-0.5">3. Isi Combo Meter & Multiplier</p>
               <p className="text-slate-400 leading-relaxed">
-                Ledakkan garis di giliran berturut-turut untuk meraih skor kombo berlipat ganda (x2, x3, dst).
+                Hancurkan baris secara beruntun untuk mengisi Combo Meter! Multiplier meningkat dari 1.5x hingga 5.0x MAX, melipatgandakan perolehan skor tiap langkah.
               </p>
             </div>
           </div>

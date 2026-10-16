@@ -442,31 +442,79 @@ export function generatePieceSet(
   return result;
 }
 
+export interface ComboTierInfo {
+  tier: number;
+  minStreak: number;
+  multiplier: number;
+  label: string;
+  bonusPercent: string;
+  glowColor: string;
+}
+
+export const COMBO_TIERS: ComboTierInfo[] = [
+  { tier: 1, minStreak: 1, multiplier: 1.5, label: '1.5x', bonusPercent: '+50%', glowColor: 'from-amber-400 to-orange-500' },
+  { tier: 2, minStreak: 2, multiplier: 2.0, label: '2.0x', bonusPercent: '+100%', glowColor: 'from-emerald-400 to-teal-500' },
+  { tier: 3, minStreak: 3, multiplier: 2.5, label: '2.5x', bonusPercent: '+150%', glowColor: 'from-cyan-400 to-blue-500' },
+  { tier: 4, minStreak: 4, multiplier: 3.2, label: '3.2x', bonusPercent: '+220%', glowColor: 'from-violet-400 to-purple-500' },
+  { tier: 5, minStreak: 5, multiplier: 5.0, label: '5.0x', bonusPercent: '+400%', glowColor: 'from-rose-500 via-amber-400 to-yellow-300' },
+];
+
 /**
- * Calculates points for placing a piece and clearing lines
+ * Returns the score multiplier according to active combo streak:
+ * 0 streak: 1.0x (Normal)
+ * 1 streak: 1.5x (+50% bonus)
+ * 2 streak: 2.0x (Double score)
+ * 3 streak: 2.5x (+150% bonus)
+ * 4 streak: 3.2x (+220% bonus)
+ * 5+ streak: 5.0x (Max Fever bonus!)
+ */
+export function getComboMultiplier(comboStreak: number): number {
+  if (comboStreak <= 0) return 1.0;
+  if (comboStreak === 1) return 1.5;
+  if (comboStreak === 2) return 2.0;
+  if (comboStreak === 3) return 2.5;
+  if (comboStreak === 4) return 3.2;
+  return 5.0;
+}
+
+/**
+ * Calculates points for placing a piece and clearing lines, applying the combo multiplier
  */
 export function calculateScore(
   placedBlocksCount: number,
   linesClearedCount: number,
   comboStreak: number
-): { points: number; title: string; subtext: string } {
-  // Placement points
-  let points = placedBlocksCount;
+): {
+  points: number;
+  baseScore: number;
+  multiplier: number;
+  title: string;
+  subtext: string;
+} {
+  const multiplier = getComboMultiplier(comboStreak);
 
   if (linesClearedCount === 0) {
-    return { points, title: '', subtext: '' };
+    return {
+      points: placedBlocksCount,
+      baseScore: placedBlocksCount,
+      multiplier: 1.0,
+      title: '',
+      subtext: '',
+    };
   }
 
   // Base line blast points
   // 1 line = 10 pts, 2 lines = 30 pts, 3 lines = 60 pts, 4 lines = 100 pts, etc.
   const linePoints = [0, 10, 30, 60, 100, 150, 210, 280, 360];
-  const baseBlast = linePoints[Math.min(linesClearedCount, linePoints.length - 1)] || linesClearedCount * 30;
+  const baseBlast =
+    linePoints[Math.min(linesClearedCount, linePoints.length - 1)] ||
+    linesClearedCount * 30;
 
-  // Combo multiplier: combo 1 = 1x, combo 2 = 1.5x, combo 3 = 2x, combo 4 = 2.5x, etc.
-  const comboMultiplier = 1 + (comboStreak - 1) * 0.5;
-  const comboBonus = Math.round(baseBlast * comboMultiplier);
+  // Base move score before multiplier (blocks placed + line clear points)
+  const baseScore = placedBlocksCount + baseBlast;
 
-  points += comboBonus;
+  // Apply multiplier to score gained for this move
+  const points = Math.round(baseScore * multiplier);
 
   // Title / Subtext for celebration
   let title = '';
@@ -476,9 +524,11 @@ export function calculateScore(
   else if (linesClearedCount >= 4) title = 'MEGA BLAST!';
 
   let subtext = '';
-  if (comboStreak > 1) {
-    subtext = `COMBO x${comboStreak} (+${comboBonus})`;
+  if (multiplier > 1.0) {
+    subtext = `${multiplier.toFixed(1)}x MULTIPLIER (+${points})`;
+  } else if (comboStreak > 1) {
+    subtext = `COMBO x${comboStreak} (+${points})`;
   }
 
-  return { points, title, subtext };
+  return { points, baseScore, multiplier, title, subtext };
 }
