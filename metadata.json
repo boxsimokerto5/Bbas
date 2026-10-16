@@ -1,0 +1,7 @@
+{
+  "name": "Block Blast Offline",
+  "description": "Permainan puzzle Block Blast klasik 8x8 yang seru, interaktif, dan dapat dimainkan secara offline di browser dengan efek suara dan combo streak.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

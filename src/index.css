@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    user-select: none;
+    -webkit-user-select: none;
+    overscroll-behavior: none;
+  }
+}
+
+.font-display {
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Perspective Grid Background matching the user's screenshot */
+.bg-game-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Screen shake animation */
+@keyframes screen-shake-mild {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3px, 2px); }
+  40% { transform: translate(3px, -2px); }
+  60% { transform: translate(-2px, -2px); }
+  80% { transform: translate(2px, 1px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes screen-shake-heavy {
+  0% { transform: translate(0, 0) scale(1); }
+  15% { transform: translate(-6px, 4px) scale(1.01); }
+  30% { transform: translate(6px, -4px) scale(1.01); }
+  45% { transform: translate(-4px, -3px) scale(0.99); }
+  60% { transform: translate(4px, 3px) scale(1.005); }
+  75% { transform: translate(-2px, 1px) scale(1); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.animate-shake-mild {
+  animation: screen-shake-mild 0.28s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.animate-shake-heavy {
+  animation: screen-shake-heavy 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* True 3D Extruded Block styling matching official Block Blast */
+.block-3d {
+  position: relative;
+  box-shadow: 
+    inset 2px 2px 0 0 rgba(255, 255, 255, 0.65),
+    inset -2px -2px 0 0 rgba(0, 0, 0, 0.3),
+    0 4px 0 0 var(--block-3d-shadow, rgba(0, 0, 0, 0.45)),
+    0 5px 6px rgba(0, 0, 0, 0.35);
+  border-radius: 6px;
+  transform: translateY(-2px);
+}
+
+.block-3d-tray {
+  position: relative;
+  box-shadow: 
+    inset 1.5px 1.5px 0 0 rgba(255, 255, 255, 0.6),
+    inset -1.5px -1.5px 0 0 rgba(0, 0, 0, 0.25),
+    0 2.5px 0 0 var(--block-3d-shadow, rgba(0, 0, 0, 0.45)),
+    0 3px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 5px;
+  transform: translateY(-1.5px);
+}
+
+/* 3D Toy Block Top Face Cushion */
+.block-3d-face {
+  position: absolute;
+  inset: 2px 2px 3px 2px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.04) 50%, rgba(0, 0, 0, 0.15) 100%);
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.block-3d-ghost {
+  box-shadow: 
+    inset 1.5px 1.5px 0 0 rgba(255, 255, 255, 0.5),
+    inset -1.5px -1.5px 0 0 rgba(0, 0, 0, 0.2),
+    0 2px 0 0 rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+}
+
+/* Cell grid socket indent */
+.grid-socket-3d {
+  box-shadow: 
+    inset 0 3px 5px rgba(0, 0, 0, 0.7),
+    inset 0 0 1px rgba(255, 255, 255, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+}
