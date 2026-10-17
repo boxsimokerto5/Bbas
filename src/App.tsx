@@ -49,6 +49,12 @@ export default function App() {
   const [activeThemeId, setActiveThemeId] = useState<ThemeId>(() => {
     if (typeof window !== 'undefined') {
       try {
+        const hasWoodDefaultApplied = localStorage.getItem('blockblast_applied_wood_default_v2');
+        if (!hasWoodDefaultApplied) {
+          localStorage.setItem('blockblast_applied_wood_default_v2', 'true');
+          localStorage.setItem('blockblast_theme', 'wood');
+          return 'wood';
+        }
         const savedTheme = localStorage.getItem('blockblast_theme') as ThemeId;
         if (savedTheme && THEMES[savedTheme]) {
           return savedTheme;
@@ -57,7 +63,7 @@ export default function App() {
         // Ignore
       }
     }
-    return 'wood';
+    return DEFAULT_THEME_ID;
   });
   const activeTheme: ThemeDef = getTheme(activeThemeId);
   const [showThemeModal, setShowThemeModal] = useState<boolean>(false);

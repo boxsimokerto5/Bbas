@@ -755,7 +755,7 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
   },
 };
 
-export const DEFAULT_THEME_ID: ThemeId = 'classic3d';
+export const DEFAULT_THEME_ID: ThemeId = 'wood';
 
 export function getTheme(themeId: ThemeId): ThemeDef {
   return THEMES[themeId] || THEMES[DEFAULT_THEME_ID];
