@@ -74,7 +74,11 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
                     <span className="font-bold text-sm sm:text-base text-white tracking-tight">
                       {t.name}
                     </span>
-                    {t.isLight ? (
+                    {t.isWood ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-950/60 border border-amber-600/50 px-2 py-0.5 rounded-full">
+                        🪵 Serat Kayu
+                      </span>
+                    ) : t.isLight ? (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full">
                         <Sun size={10} />
                         Cerah
@@ -110,12 +114,14 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
                   {Object.values(t.colorDefs).slice(0, 7).map((c) => (
                     <div
                       key={c.id}
-                      className={`w-6 h-6 rounded-md bg-gradient-to-br ${c.gradient} ${c.border} border block-bevel relative shadow-sm`}
+                      className={`w-6 h-6 rounded-md bg-gradient-to-br ${c.gradient} ${c.border} border ${t.isWood ? 'block-wood-3d' : 'block-bevel'} relative shadow-sm overflow-hidden`}
                       title={c.name}
-                    />
+                    >
+                      {t.isWood && <div className="wood-grain-texture" />}
+                    </div>
                   ))}
                   <div
-                    className={`w-6 h-6 rounded-md ${t.boardBg} ${t.boardBorder} border grid-socket flex items-center justify-center ml-1`}
+                    className={`w-6 h-6 rounded-md ${t.boardBg} ${t.boardBorder} border ${t.isWood ? 'grid-socket-wood' : 'grid-socket'} flex items-center justify-center ml-1`}
                     title="Papan"
                   >
                     <div className={`w-1.5 h-1.5 rounded-full ${t.socketDot}`} />

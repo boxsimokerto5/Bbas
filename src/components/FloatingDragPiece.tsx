@@ -7,6 +7,7 @@ interface FloatingDragPieceProps {
   y: number;
   cellSize: number;
   colorDef?: ColorDef;
+  isWood?: boolean;
 }
 
 export const FloatingDragPiece: React.FC<FloatingDragPieceProps> = ({
@@ -15,6 +16,7 @@ export const FloatingDragPiece: React.FC<FloatingDragPieceProps> = ({
   y,
   cellSize,
   colorDef,
+  isWood = false,
 }) => {
   const activeColor = colorDef || piece.color;
   const shadowColor = activeColor.shadowColor || 'rgba(0,0,0,0.5)';
@@ -34,7 +36,11 @@ export const FloatingDragPiece: React.FC<FloatingDragPieceProps> = ({
       }}
     >
       {/* Motion Speed Trails underneath piece */}
-      <div className="absolute -top-6 inset-x-2 h-7 bg-gradient-to-t from-white/20 to-transparent blur-[1px] rounded-t-lg -z-10" />
+      <div
+        className={`absolute -top-6 inset-x-2 h-7 bg-gradient-to-t ${
+          isWood ? 'from-amber-400/20' : 'from-white/20'
+        } to-transparent blur-[1px] rounded-t-lg -z-10`}
+      />
 
       <div
         className="grid gap-1 scale-105"
@@ -47,6 +53,24 @@ export const FloatingDragPiece: React.FC<FloatingDragPieceProps> = ({
           row.map((cell, c) => {
             if (cell === 0) {
               return <div key={`${r}-${c}`} style={{ width: cellSize, height: cellSize }} />;
+            }
+
+            if (isWood) {
+              return (
+                <div
+                  key={`${r}-${c}`}
+                  style={{
+                    width: cellSize,
+                    height: cellSize,
+                    ['--block-3d-shadow' as string]: shadowColor,
+                  }}
+                  className={`block-wood-3d bg-gradient-to-br ${activeColor.gradient} ${activeColor.border} border-2 relative overflow-hidden`}
+                >
+                  <div className="wood-grain-texture" />
+                  <div className="block-wood-face" />
+                  <div className="absolute top-1 left-1 w-2 h-2 rounded-full bg-amber-100/40 pointer-events-none" />
+                </div>
+              );
             }
 
             return (

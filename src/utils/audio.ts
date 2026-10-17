@@ -349,7 +349,7 @@ class SoundSystem {
   /**
    * Sound when placing a block down on the board
    */
-  public playPlace(): void {
+  public playPlace(isWood?: boolean): void {
     if (this.muted) return;
     this.initContext();
     if (!this.ctx) return;
@@ -357,7 +357,42 @@ class SoundSystem {
     try {
       const now = this.ctx.currentTime;
 
-      // Click/thud component
+      if (isWood) {
+        // Authentic solid wooden block "tok" knock
+        const woodBody = this.ctx.createOscillator();
+        const woodGain = this.ctx.createGain();
+
+        woodBody.type = 'sine';
+        woodBody.frequency.setValueAtTime(220, now);
+        woodBody.frequency.exponentialRampToValueAtTime(110, now + 0.075);
+
+        woodGain.gain.setValueAtTime(0.24, now);
+        woodGain.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
+
+        woodBody.connect(woodGain);
+        woodGain.connect(this.ctx.destination);
+        woodBody.start(now);
+        woodBody.stop(now + 0.075);
+
+        // Crisp wooden surface clack
+        const clackOsc = this.ctx.createOscillator();
+        const clackGain = this.ctx.createGain();
+
+        clackOsc.type = 'triangle';
+        clackOsc.frequency.setValueAtTime(740, now);
+        clackOsc.frequency.exponentialRampToValueAtTime(320, now + 0.04);
+
+        clackGain.gain.setValueAtTime(0.12, now);
+        clackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+        clackOsc.connect(clackGain);
+        clackGain.connect(this.ctx.destination);
+        clackOsc.start(now);
+        clackOsc.stop(now + 0.04);
+        return;
+      }
+
+      // Default toy block click/thud component
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
 
@@ -374,7 +409,7 @@ class SoundSystem {
       osc.start(now);
       osc.stop(now + 0.09);
 
-      // Glass tap tone
+      // Glass / acrylic tap tone
       const osc2 = this.ctx.createOscillator();
       const gain2 = this.ctx.createGain();
       osc2.type = 'sine';
@@ -396,36 +431,40 @@ class SoundSystem {
 
   /**
    * Sound when lines are blasted/cleared.
-   * Pitch climbs melodically with combo streak!
+   * Dynamic sound layering system that progressively escalates pitch,
+   * layers extra harmonics, and adds celebratory arpeggios as combo streak increases!
    */
-  public playClear(lines: number, comboStreak: number): void {
+  public playClear(lines: number, comboStreak: number, isWood?: boolean): void {
     if (this.muted) return;
     this.initContext();
     if (!this.ctx) return;
 
     try {
       const now = this.ctx.currentTime;
-      // Musical pentatonic scale base notes: C4, D4, E4, G4, A4, C5, D5, E5, G5, A5
-      const scale = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25, 783.99, 880.0];
-      const baseIndex = Math.min(comboStreak * 2, scale.length - 3);
+      // Progressive exponential pitch escalation multiplier per combo
+      const progressiveMultiplier = Math.pow(1.085, Math.min(comboStreak, 16));
 
-      const notes = [
-        scale[baseIndex % scale.length],
-        scale[(baseIndex + 2) % scale.length],
-        scale[(baseIndex + 4) % scale.length],
+      // Pentatonic intervals (Root, M3, P5, M6, Octave, M9, M11, P12)
+      const baseFrequencies = [261.63, 329.63, 392.00, 440.00, 523.25, 659.25, 783.99, 1046.50];
+
+      // Layer 1: Core triad chord with progressive pitch scaling
+      const coreNotes = [
+        baseFrequencies[0] * progressiveMultiplier,
+        baseFrequencies[1] * progressiveMultiplier,
+        baseFrequencies[2] * progressiveMultiplier,
       ];
 
-      notes.forEach((freq, idx) => {
+      coreNotes.forEach((freq, idx) => {
         if (!this.ctx) return;
-        const noteTime = now + idx * 0.065;
+        const noteTime = now + idx * 0.055;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
 
-        osc.type = lines >= 3 ? 'triangle' : 'sine';
+        osc.type = isWood ? 'triangle' : (lines >= 3 ? 'triangle' : 'sine');
         osc.frequency.setValueAtTime(freq, noteTime);
-        osc.frequency.exponentialRampToValueAtTime(freq * 1.02, noteTime + 0.28);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.015, noteTime + 0.28);
 
-        const volume = 0.14 + Math.min(lines * 0.03, 0.12);
+        const volume = 0.15 + Math.min(lines * 0.025, 0.1);
         gain.gain.setValueAtTime(volume, noteTime);
         gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.32);
 
@@ -436,23 +475,76 @@ class SoundSystem {
         osc.stop(noteTime + 0.32);
       });
 
-      // Shimmer sparkle if high combo
+      // Layer 2: Harmonic Upper Octave & Sparkle (Combo >= 2)
       if (comboStreak >= 2) {
-        const sparkleTime = now + 0.18;
-        const sOsc = this.ctx.createOscillator();
-        const sGain = this.ctx.createGain();
-        sOsc.type = 'sine';
-        sOsc.frequency.setValueAtTime(1046.5, sparkleTime); // C6
-        sOsc.frequency.exponentialRampToValueAtTime(1318.5, sparkleTime + 0.2); // E6
+        const octaveTime = now + 0.12;
+        const oFreq = baseFrequencies[4] * progressiveMultiplier;
+        const oOsc = this.ctx.createOscillator();
+        const oGain = this.ctx.createGain();
 
-        sGain.gain.setValueAtTime(0.08, sparkleTime);
-        sGain.gain.exponentialRampToValueAtTime(0.001, sparkleTime + 0.2);
+        oOsc.type = 'sine';
+        oOsc.frequency.setValueAtTime(oFreq, octaveTime);
+        oOsc.frequency.exponentialRampToValueAtTime(oFreq * 1.02, octaveTime + 0.22);
 
-        sOsc.connect(sGain);
-        sGain.connect(this.ctx.destination);
+        oGain.gain.setValueAtTime(0.1, octaveTime);
+        oGain.gain.exponentialRampToValueAtTime(0.001, octaveTime + 0.24);
 
-        sOsc.start(sparkleTime);
-        sOsc.stop(sparkleTime + 0.2);
+        oOsc.connect(oGain);
+        oGain.connect(this.ctx.destination);
+
+        oOsc.start(octaveTime);
+        oOsc.stop(octaveTime + 0.24);
+      }
+
+      // Layer 3: High Shimmer Bell Overtone (Combo >= 4)
+      if (comboStreak >= 4) {
+        const bellTime = now + 0.16;
+        const bFreq = baseFrequencies[6] * progressiveMultiplier;
+        const bOsc = this.ctx.createOscillator();
+        const bGain = this.ctx.createGain();
+
+        bOsc.type = 'sine';
+        bOsc.frequency.setValueAtTime(bFreq, bellTime);
+        bOsc.frequency.exponentialRampToValueAtTime(bFreq * 1.03, bellTime + 0.25);
+
+        bGain.gain.setValueAtTime(0.09, bellTime);
+        bGain.gain.exponentialRampToValueAtTime(0.001, bellTime + 0.26);
+
+        bOsc.connect(bGain);
+        bGain.connect(this.ctx.destination);
+
+        bOsc.start(bellTime);
+        bOsc.stop(bellTime + 0.26);
+      }
+
+      // Layer 4: Celebratory Ascending Arpeggio Cascade (Combo >= 6)
+      if (comboStreak >= 6) {
+        const arpeggioNotes = [
+          baseFrequencies[2] * progressiveMultiplier,
+          baseFrequencies[4] * progressiveMultiplier,
+          baseFrequencies[5] * progressiveMultiplier,
+          baseFrequencies[7] * progressiveMultiplier,
+        ];
+
+        arpeggioNotes.forEach((aFreq, aIdx) => {
+          if (!this.ctx) return;
+          const aTime = now + 0.18 + aIdx * 0.045;
+          const aOsc = this.ctx.createOscillator();
+          const aGain = this.ctx.createGain();
+
+          aOsc.type = 'sine';
+          aOsc.frequency.setValueAtTime(aFreq, aTime);
+          aOsc.frequency.exponentialRampToValueAtTime(aFreq * 1.02, aTime + 0.2);
+
+          aGain.gain.setValueAtTime(0.08, aTime);
+          aGain.gain.exponentialRampToValueAtTime(0.001, aTime + 0.22);
+
+          aOsc.connect(aGain);
+          aGain.connect(this.ctx.destination);
+
+          aOsc.start(aTime);
+          aOsc.stop(aTime + 0.22);
+        });
       }
 
       // 1. Suara tepuk tangan (applause) di setiap blast

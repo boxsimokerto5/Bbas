@@ -5,6 +5,7 @@ interface PieceTrayItemProps {
   piece: PlacedPiece;
   canFit: boolean;
   colorDef?: ColorDef;
+  isWood?: boolean;
   isSelected?: boolean;
   isDragging?: boolean;
   onPointerDown: (e: React.PointerEvent<HTMLDivElement>, piece: PlacedPiece) => void;
@@ -15,6 +16,7 @@ export const PieceTrayItem: React.FC<PieceTrayItemProps> = ({
   piece,
   canFit,
   colorDef,
+  isWood = false,
   isSelected = false,
   isDragging = false,
   onPointerDown,
@@ -22,7 +24,7 @@ export const PieceTrayItem: React.FC<PieceTrayItemProps> = ({
 }) => {
   if (piece.isUsed) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-[66px] sm:min-h-[76px] opacity-10 pointer-events-none" />
+      <div className="flex-1 flex items-center justify-center min-h-[92px] opacity-10 pointer-events-none" />
     );
   }
 
@@ -31,7 +33,7 @@ export const PieceTrayItem: React.FC<PieceTrayItemProps> = ({
   const { matrix } = piece.shape;
   const rows = matrix.length;
   const cols = matrix[0].length;
-  const cellSize = 21; // Clear and prominent tray preview size
+  const cellSize = 22; // Compact tray preview size
 
   return (
     <div
@@ -40,14 +42,14 @@ export const PieceTrayItem: React.FC<PieceTrayItemProps> = ({
       role="button"
       tabIndex={0}
       aria-label={`${piece.shape.name} ${!canFit ? '(Tidak muat di papan)' : ''}`}
-      className={`flex-1 flex flex-col items-center justify-center p-0.5 sm:p-1 rounded-xl min-h-[66px] sm:min-h-[76px] transition-all duration-200 cursor-grab active:cursor-grabbing touch-none select-none relative group ${
+      className={`flex-1 flex flex-col items-center justify-center p-2 rounded-2xl min-h-[104px] transition-all duration-200 cursor-grab active:cursor-grabbing touch-none select-none relative group ${
         isDragging
           ? 'opacity-20 scale-95'
           : canFit
           ? 'hover:bg-white/10 hover:scale-105 active:scale-95'
           : 'opacity-40 saturate-50'
       } ${
-        isSelected ? 'ring-2 ring-amber-400 bg-amber-500/15 shadow-md shadow-amber-500/10' : ''
+        isSelected ? 'ring-2 ring-amber-400 bg-amber-500/15 shadow-lg shadow-amber-500/10' : ''
       }`}
     >
       <div
@@ -61,6 +63,24 @@ export const PieceTrayItem: React.FC<PieceTrayItemProps> = ({
           row.map((cell, c) => {
             if (cell === 0) {
               return <div key={`${r}-${c}`} style={{ width: cellSize, height: cellSize }} />;
+            }
+
+            if (isWood) {
+              return (
+                <div
+                  key={`${r}-${c}`}
+                  style={{
+                    width: cellSize,
+                    height: cellSize,
+                    ['--block-3d-shadow' as string]: shadowColor,
+                  }}
+                  className={`rounded-md bg-gradient-to-br ${activeColor.gradient} ${activeColor.border} border block-wood-tray relative overflow-hidden`}
+                >
+                  <div className="wood-grain-texture" />
+                  <div className="block-wood-face" />
+                  <div className="absolute top-0.5 left-0.5 w-1 h-1 rounded-full bg-amber-100/40 pointer-events-none" />
+                </div>
+              );
             }
 
             return (
@@ -82,7 +102,7 @@ export const PieceTrayItem: React.FC<PieceTrayItemProps> = ({
       </div>
 
       {!canFit && (
-        <span className="text-[9px] font-bold text-rose-300 bg-rose-950/60 border border-rose-800/80 px-1 py-0.2 rounded-full mt-1 uppercase tracking-wider leading-none">
+        <span className="text-[10px] font-bold text-rose-300 bg-rose-950/60 border border-rose-800/80 px-1.5 py-0.5 rounded-full mt-1.5 uppercase tracking-wider">
           Penuh
         </span>
       )}

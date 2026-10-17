@@ -48,18 +48,18 @@ export default function App() {
   // Theme state
   const [activeThemeId, setActiveThemeId] = useState<ThemeId>(() => {
     if (typeof window !== 'undefined') {
-      const is3DSet = localStorage.getItem('blockblast_has_seen_3d');
-      if (!is3DSet) {
-        localStorage.setItem('blockblast_has_seen_3d', 'true');
-        localStorage.setItem('blockblast_theme', 'classic3d');
-        return 'classic3d';
+      const isWoodSet = localStorage.getItem('blockblast_has_seen_wood_v2');
+      if (!isWoodSet) {
+        localStorage.setItem('blockblast_has_seen_wood_v2', 'true');
+        localStorage.setItem('blockblast_theme', 'wood');
+        return 'wood';
       }
       const savedTheme = localStorage.getItem('blockblast_theme') as ThemeId;
       if (savedTheme && THEMES[savedTheme]) {
         return savedTheme;
       }
     }
-    return DEFAULT_THEME_ID;
+    return 'wood';
   });
   const activeTheme: ThemeDef = getTheme(activeThemeId);
   const [showThemeModal, setShowThemeModal] = useState<boolean>(false);
@@ -484,7 +484,7 @@ export default function App() {
       }
 
       // 1. Play place sound and haptics
-      sound.playPlace();
+      sound.playPlace(activeTheme.isWood);
       haptics.medium();
 
       // 2. Put piece on new board copy
@@ -530,8 +530,8 @@ export default function App() {
         setScore(nextScore);
         checkUpdateHighScore(nextScore);
 
-        // Sound, Haptics & Screen Shake
-        sound.playClear(linesCount, nextCombo);
+        // Sound, Haptics & Screen Shake (with wood knock and progressive pitch layering)
+        sound.playClear(linesCount, nextCombo, activeTheme.isWood);
         haptics.blast(linesCount);
         haptics.combo(nextCombo);
 
@@ -1012,6 +1012,7 @@ export default function App() {
                 piece={piece}
                 canFit={canFit}
                 colorDef={pieceColor}
+                isWood={activeTheme.isWood}
                 isDragging={isDraggingThis}
                 isSelected={isSelectedThis}
                 onPointerDown={handlePiecePointerDown}
@@ -1037,6 +1038,7 @@ export default function App() {
       {dragState.piece && (
         <FloatingDragPiece
           piece={dragState.piece}
+          isWood={activeTheme.isWood}
           colorDef={
             activeTheme.colorDefs[dragState.piece.shape.colorId] ||
             THEMES.jewel.colorDefs[dragState.piece.shape.colorId]

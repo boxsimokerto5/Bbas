@@ -18,12 +18,40 @@
   font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
 }
 
-/* Perspective Grid Background matching the user's screenshot */
+/* Perspective Grid Background matching Block Blast blue sky */
 .bg-game-grid {
   background-image: 
     linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
   background-size: 28px 28px;
+}
+
+/* Authentic Wooden Planks Table Background */
+.bg-wood-planks {
+  background-color: #21140e;
+  background-image: 
+    /* Vertical plank seam dividers */
+    linear-gradient(90deg, 
+      rgba(0, 0, 0, 0.45) 0px, 
+      rgba(0, 0, 0, 0.45) 2px, 
+      transparent 2px, 
+      transparent 138px, 
+      rgba(0, 0, 0, 0.45) 138px, 
+      rgba(0, 0, 0, 0.45) 140px
+    ),
+    /* Organic wood fibers and grain rings */
+    repeating-linear-gradient(178deg,
+      rgba(255, 215, 160, 0.035) 0px,
+      rgba(255, 215, 160, 0.035) 1px,
+      transparent 1px,
+      transparent 4px,
+      rgba(0, 0, 0, 0.04) 4px,
+      rgba(0, 0, 0, 0.04) 8px
+    ),
+    /* Soft warm vignette & tabletop lamp lighting */
+    radial-gradient(circle at 50% 30%, rgba(255, 190, 110, 0.12), transparent 75%),
+    linear-gradient(180deg, #2c1a11 0%, #1e120a 50%, #170d07 100%);
+  background-size: 140px 100%, 100% 100%, 100% 100%, 100% 100%;
 }
 
 /* Screen shake animation */
@@ -87,6 +115,57 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
+/* Carved Wood Block with authentic timber fibers and chamfered bevels */
+.block-wood-3d {
+  position: relative;
+  box-shadow: 
+    inset 2px 2px 0 0 rgba(255, 220, 160, 0.45),
+    inset -2px -2px 0 0 rgba(0, 0, 0, 0.45),
+    0 4px 0 0 var(--block-3d-shadow, #2c1509),
+    0 6px 7px rgba(0, 0, 0, 0.5);
+  border-radius: 5px;
+  transform: translateY(-2px);
+}
+
+.block-wood-tray {
+  position: relative;
+  box-shadow: 
+    inset 1.5px 1.5px 0 0 rgba(255, 220, 160, 0.4),
+    inset -1.5px -1.5px 0 0 rgba(0, 0, 0, 0.4),
+    0 2.5px 0 0 var(--block-3d-shadow, #2c1509),
+    0 3.5px 5px rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  transform: translateY(-1.5px);
+}
+
+/* Realistic wood grain texture lines across block face */
+.wood-grain-texture {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: repeating-linear-gradient(
+    108deg,
+    rgba(255, 225, 180, 0.14) 0px,
+    rgba(255, 225, 180, 0.14) 1px,
+    transparent 1px,
+    transparent 5px,
+    rgba(40, 15, 5, 0.15) 5px,
+    rgba(40, 15, 5, 0.15) 8px
+  );
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* Inner routed carved inset for wooden blocks */
+.block-wood-face {
+  position: absolute;
+  inset: 2px 2px 3px 2px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(255, 230, 180, 0.25) 0%, rgba(255, 230, 180, 0.04) 40%, rgba(0, 0, 0, 0.22) 100%);
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 rgba(255, 230, 180, 0.4);
+}
+
 .block-3d-ghost {
   box-shadow: 
     inset 1.5px 1.5px 0 0 rgba(255, 255, 255, 0.5),
@@ -95,11 +174,21 @@
   border-radius: 6px;
 }
 
-/* Cell grid socket indent */
+/* Cell grid socket indent for standard boards */
 .grid-socket-3d {
   box-shadow: 
     inset 0 3px 5px rgba(0, 0, 0, 0.7),
     inset 0 0 1px rgba(255, 255, 255, 0.08),
     0 1px 0 rgba(255, 255, 255, 0.05);
   border-radius: 6px;
+}
+
+/* Carved wooden socket wells routed into solid dark timber */
+.grid-socket-wood {
+  box-shadow: 
+    inset 0 4px 6px rgba(0, 0, 0, 0.85),
+    inset 0 1px 2px rgba(0, 0, 0, 0.9),
+    inset 0 0 1px rgba(255, 200, 130, 0.12),
+    0 1px 0 rgba(255, 210, 150, 0.08);
+  border-radius: 5px;
 }

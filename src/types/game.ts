@@ -15,6 +15,7 @@ export interface ThemeDef {
   name: string;
   tagline: string;
   isLight?: boolean;
+  isWood?: boolean;
   previewColors: string[];
   bgClass: string;
   ambientTop: string;
