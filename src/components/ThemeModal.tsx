@@ -114,17 +114,17 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
                   {Object.values(t.colorDefs).slice(0, 7).map((c) => (
                     <div
                       key={c.id}
-                      className={`w-6 h-6 rounded-md bg-gradient-to-br ${c.gradient} ${c.border} border ${t.isWood ? 'block-wood-3d' : 'block-bevel'} relative shadow-sm overflow-hidden`}
+                      className={`w-6 h-6 rounded-md bg-gradient-to-br ${c.gradient} ${c.border} border ${t.isWood ? 'block-wood-3d' : 'block-3d'} relative shadow-sm overflow-hidden`}
                       title={c.name}
                     >
                       {t.isWood && <div className="wood-grain-texture" />}
                     </div>
                   ))}
                   <div
-                    className={`w-6 h-6 rounded-md ${t.boardBg} ${t.boardBorder} border ${t.isWood ? 'grid-socket-wood' : 'grid-socket'} flex items-center justify-center ml-1`}
+                    className={`w-6 h-6 rounded-md ${t.boardBg} ${t.boardBorder} border ${t.isWood ? 'grid-socket-wood' : 'grid-socket-3d'} flex items-center justify-center ml-1`}
                     title="Papan"
                   >
-                    <div className={`w-1.5 h-1.5 rounded-full ${t.socketDot}`} />
+                    <div className={`w-1.5 h-1.5 rounded-full ${t.socketDot || 'bg-slate-700'}`} />
                   </div>
                 </div>
               </button>

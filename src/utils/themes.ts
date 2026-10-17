@@ -380,10 +380,10 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
   wood: {
     id: 'wood',
     name: 'Kayu Pahat Asli 3D',
-    tagline: 'Latar serat papan kayu meja dengan balok ukir kayu 3D alami',
+    tagline: 'Latar serat kayu alami dengan balok ukir kayu 3D autentik',
     isLight: false,
     isWood: true,
-    previewColors: ['#e89005', '#be2626', '#f7d070', '#74992e', '#2a9488', '#4f568a', '#8e296a'],
+    previewColors: ['#d49746', '#8b3a2b', '#ecd094', '#943f2c', '#5a4336', '#dcba73', '#6f6734'],
     bgClass: 'bg-wood-planks',
     ambientTop: 'from-amber-600/15 via-orange-800/10 to-transparent',
     ambientBottom: 'from-amber-900/25 via-stone-900/20 to-transparent',
@@ -399,75 +399,75 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
     colorDefs: {
       ruby: {
         id: 'ruby',
-        name: 'Mahoni Merah',
-        gradient: 'from-[#be2626] via-[#991b1b] to-[#731313]',
-        glow: 'shadow-red-950/60',
-        border: 'border-amber-200/40',
-        shadowColor: '#3d0707',
-        particleHex: '#b91c1c',
+        name: 'Mahoni Merah Tua',
+        gradient: 'from-[#8b3a2b] via-[#6e2c20] to-[#541f16]',
+        glow: 'shadow-amber-950/60',
+        border: 'border-amber-300/40',
+        shadowColor: '#36110a',
+        particleHex: '#8b3a2b',
       },
       amber: {
         id: 'amber',
-        name: 'Oak Emas',
-        gradient: 'from-[#e89005] via-[#cc7a00] to-[#a35e00]',
+        name: 'Kayu Oak Emas',
+        gradient: 'from-[#d49746] via-[#bc7d2a] to-[#9b6319]',
         glow: 'shadow-amber-900/60',
         border: 'border-amber-200/50',
-        shadowColor: '#522e02',
-        particleHex: '#d97706',
+        shadowColor: '#5c3809',
+        particleHex: '#d49746',
       },
       topaz: {
         id: 'topaz',
-        name: 'Pinus Terang',
-        gradient: 'from-[#f7d070] via-[#e8b948] to-[#c79828]',
+        name: 'Pinus & Birch Terang',
+        gradient: 'from-[#ecd094] via-[#dcba73] to-[#c79f53]',
         glow: 'shadow-yellow-900/50',
         border: 'border-amber-100/60',
-        shadowColor: '#694807',
-        particleHex: '#eab308',
+        shadowColor: '#785b24',
+        particleHex: '#dcba73',
       },
       emerald: {
         id: 'emerald',
-        name: 'Cedar Zaitun',
-        gradient: 'from-[#74992e] via-[#5c7a20] to-[#455c17]',
-        glow: 'shadow-lime-950/60',
-        border: 'border-lime-100/40',
-        shadowColor: '#223007',
-        particleHex: '#65a30d',
+        name: 'Kayu Zaitun Alami',
+        gradient: 'from-[#8a7f47] via-[#6f6734] to-[#544d21]',
+        glow: 'shadow-stone-900/60',
+        border: 'border-amber-100/40',
+        shadowColor: '#332e12',
+        particleHex: '#8a7f47',
       },
       cyan: {
         id: 'cyan',
-        name: 'Weathered Teak',
-        gradient: 'from-[#2a9488] via-[#1b7369] to-[#12574e]',
-        glow: 'shadow-teal-950/60',
-        border: 'border-teal-200/40',
-        shadowColor: '#072b27',
-        particleHex: '#0d9488',
+        name: 'Jati / Weathered Teak',
+        gradient: 'from-[#8a7b6d] via-[#736558] to-[#5a4d42]',
+        glow: 'shadow-stone-950/60',
+        border: 'border-amber-200/40',
+        shadowColor: '#372e27',
+        particleHex: '#8a7b6d',
       },
       sapphire: {
         id: 'sapphire',
-        name: 'Walnut Nila',
-        gradient: 'from-[#4f568a] via-[#3d4473] to-[#2e345c]',
-        glow: 'shadow-indigo-950/60',
-        border: 'border-indigo-200/40',
-        shadowColor: '#151833',
-        particleHex: '#4338ca',
+        name: 'Kayu Walnut Tua',
+        gradient: 'from-[#5a4336] via-[#433127] to-[#30221b]',
+        glow: 'shadow-stone-950/60',
+        border: 'border-amber-200/40',
+        shadowColor: '#1d1410',
+        particleHex: '#5a4336',
       },
       amethyst: {
         id: 'amethyst',
-        name: 'Rosewood Pelitur',
-        gradient: 'from-[#8e296a] via-[#701e53] to-[#52133b]',
+        name: 'Rosewood Gelap',
+        gradient: 'from-[#653e49] via-[#4e2d36] to-[#391e25]',
         glow: 'shadow-purple-950/60',
-        border: 'border-pink-200/40',
-        shadowColor: '#29051c',
-        particleHex: '#86198f',
+        border: 'border-pink-200/30',
+        shadowColor: '#241116',
+        particleHex: '#653e49',
       },
       rose: {
         id: 'rose',
-        name: 'Kayu Ceri Tropis',
-        gradient: 'from-[#cc4927] via-[#a83416] to-[#80220a]',
+        name: 'Kayu Ceri Alami',
+        gradient: 'from-[#b0523d] via-[#943f2c] to-[#752c1b]',
         glow: 'shadow-orange-950/60',
-        border: 'border-orange-200/40',
-        shadowColor: '#420e03',
-        particleHex: '#ea580c',
+        border: 'border-amber-200/40',
+        shadowColor: '#45160b',
+        particleHex: '#b0523d',
       },
     },
   },
@@ -759,4 +759,18 @@ export const DEFAULT_THEME_ID: ThemeId = 'classic3d';
 
 export function getTheme(themeId: ThemeId): ThemeDef {
   return THEMES[themeId] || THEMES[DEFAULT_THEME_ID];
+}
+
+export function getColorDef(
+  theme: ThemeDef | null | undefined,
+  colorId: ColorId | string | null | undefined
+): ColorDef {
+  const active = theme || THEMES[DEFAULT_THEME_ID];
+  if (colorId && active.colorDefs && active.colorDefs[colorId as ColorId]) {
+    return active.colorDefs[colorId as ColorId];
+  }
+  if (colorId && THEMES.classic3d.colorDefs[colorId as ColorId]) {
+    return THEMES.classic3d.colorDefs[colorId as ColorId];
+  }
+  return active.colorDefs?.amber || THEMES.classic3d.colorDefs.amber;
 }

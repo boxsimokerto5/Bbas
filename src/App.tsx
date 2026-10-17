@@ -31,7 +31,7 @@ import {
   loadAchievements,
   saveAchievements,
 } from './utils/achievements';
-import { THEMES, DEFAULT_THEME_ID, getTheme } from './utils/themes';
+import { THEMES, DEFAULT_THEME_ID, getTheme, getColorDef } from './utils/themes';
 import { GameHeader } from './components/GameHeader';
 import { GameBoard } from './components/GameBoard';
 import { ComboMeter } from './components/ComboMeter';
@@ -45,18 +45,16 @@ import { AchievementsModal } from './components/AchievementsModal';
 import { ParticleCanvas, ParticleCanvasHandle } from './components/ParticleCanvas';
 
 export default function App() {
-  // Theme state
+  // Theme state (persisted in localStorage, defaults to wood)
   const [activeThemeId, setActiveThemeId] = useState<ThemeId>(() => {
     if (typeof window !== 'undefined') {
-      const isWoodSet = localStorage.getItem('blockblast_has_seen_wood_v2');
-      if (!isWoodSet) {
-        localStorage.setItem('blockblast_has_seen_wood_v2', 'true');
-        localStorage.setItem('blockblast_theme', 'wood');
-        return 'wood';
-      }
-      const savedTheme = localStorage.getItem('blockblast_theme') as ThemeId;
-      if (savedTheme && THEMES[savedTheme]) {
-        return savedTheme;
+      try {
+        const savedTheme = localStorage.getItem('blockblast_theme') as ThemeId;
+        if (savedTheme && THEMES[savedTheme]) {
+          return savedTheme;
+        }
+      } catch {
+        // Ignore
       }
     }
     return 'wood';
@@ -145,14 +143,18 @@ export default function App() {
   const handleSelectTheme = useCallback((themeId: ThemeId) => {
     setActiveThemeId(themeId);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('blockblast_theme', themeId);
+      try {
+        localStorage.setItem('blockblast_theme', themeId);
+      } catch {
+        // Ignore
+      }
     }
     const newTheme = getTheme(themeId);
     // Update existing pieces to use new theme colors
     setPieces((prevPieces) =>
       prevPieces.map((p) => ({
         ...p,
-        color: newTheme.colorDefs[p.shape.colorId] || p.color,
+        color: getColorDef(newTheme, p.shape.colorId),
       }))
     );
   }, []);
@@ -376,8 +378,8 @@ export default function App() {
         const rect = boardContainerRef.current.getBoundingClientRect();
         const cellStep = (rect.width - 24) / BOARD_SIZE;
         const colorKey = cellData.colorId || 'amber';
-        const colorDef = activeTheme.colorDefs[colorKey] || THEMES.jewel.colorDefs[colorKey];
-        const colorHex = colorDef.particleHex;
+        const colorDef = getColorDef(activeTheme, colorKey);
+        const colorHex = colorDef.particleHex || '#d97706';
         const cellCenterX = 12 + c * cellStep + cellStep / 2;
         const cellCenterY = 12 + r * cellStep + cellStep / 2;
         particleCanvasRef.current?.burst(cellCenterX, cellCenterY, colorHex, 20);
@@ -584,8 +586,8 @@ export default function App() {
             const [r, c] = coord.split(',').map(Number);
             const cellData = nextBoard[r][c];
             const colorKey = cellData?.colorId || 'amber';
-            const colorDef = activeTheme.colorDefs[colorKey] || THEMES.jewel.colorDefs[colorKey];
-            const colorHex = colorDef.particleHex;
+            const colorDef = getColorDef(activeTheme, colorKey);
+            const colorHex = colorDef.particleHex || '#d97706';
             const cellCenterX = 12 + c * cellStep + cellStep / 2;
             const cellCenterY = 12 + r * cellStep + cellStep / 2;
 
@@ -1003,8 +1005,7 @@ export default function App() {
             const canFit = !piece.isUsed && canPlaceShapeAnywhere(board, piece.shape.matrix);
             const isDraggingThis = dragState.piece?.id === piece.id;
             const isSelectedThis = selectedPiece?.id === piece.id;
-            const pieceColor =
-              activeTheme.colorDefs[piece.shape.colorId] || THEMES.jewel.colorDefs[piece.shape.colorId];
+            const pieceColor = getColorDef(activeTheme, piece.shape.colorId);
 
             return (
               <PieceTrayItem
@@ -1039,10 +1040,7 @@ export default function App() {
         <FloatingDragPiece
           piece={dragState.piece}
           isWood={activeTheme.isWood}
-          colorDef={
-            activeTheme.colorDefs[dragState.piece.shape.colorId] ||
-            THEMES.jewel.colorDefs[dragState.piece.shape.colorId]
-          }
+          colorDef={getColorDef(activeTheme, dragState.piece.shape.colorId)}
           x={dragState.clientX}
           y={dragState.clientY - (dragState.isTouch ? 60 : 0)}
           cellSize={cellSize}

@@ -43,11 +43,15 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   const effectiveSfxMuted = isSfxMuted !== undefined ? isSfxMuted : isMuted;
   const handleToggleSfx = onToggleSfxMute || onToggleMute || (() => {});
 
+  const isWood = theme.isWood;
+
   const btnClass = isLight
-    ? 'w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer shadow-sm active:scale-95 flex-shrink-0'
+    ? 'w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer shadow-sm active:scale-95 flex-shrink-0'
+    : isWood
+    ? 'w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#3a2012]/80 border border-[#5d341c] text-amber-200 hover:text-amber-100 hover:bg-[#4a2b1a] transition-colors flex items-center justify-center cursor-pointer shadow-sm active:scale-95 flex-shrink-0'
     : isClassic3D
-    ? 'w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-lg bg-blue-950/60 border border-blue-400/30 text-blue-100 hover:text-white hover:bg-blue-900/80 transition-colors flex items-center justify-center cursor-pointer shadow-sm backdrop-blur-sm active:scale-95 flex-shrink-0'
-    : 'w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer active:scale-95 flex-shrink-0';
+    ? 'w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-950/60 border border-blue-400/30 text-blue-100 hover:text-white hover:bg-blue-900/80 transition-colors flex items-center justify-center cursor-pointer shadow-sm backdrop-blur-sm active:scale-95 flex-shrink-0'
+    : 'w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer active:scale-95 flex-shrink-0';
 
   return (
     <header className="w-full max-w-md mx-auto flex flex-col gap-1 px-1.5 pt-0.5 pb-0.5 select-none flex-shrink-0">

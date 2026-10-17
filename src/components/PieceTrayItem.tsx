@@ -1,5 +1,6 @@
 import React from 'react';
 import { ColorDef, PlacedPiece } from '../types/game';
+import { THEMES } from '../utils/themes';
 
 interface PieceTrayItemProps {
   piece: PlacedPiece;
@@ -28,8 +29,11 @@ export const PieceTrayItem: React.FC<PieceTrayItemProps> = ({
     );
   }
 
-  const activeColor = colorDef || piece.color;
-  const shadowColor = activeColor.shadowColor || 'rgba(0,0,0,0.45)';
+  const activeColor =
+    colorDef ||
+    piece.color ||
+    (isWood ? THEMES.wood.colorDefs.amber : THEMES.classic3d.colorDefs.amber);
+  const shadowColor = activeColor.shadowColor || '#2c1509';
   const { matrix } = piece.shape;
   const rows = matrix.length;
   const cols = matrix[0].length;
@@ -69,11 +73,13 @@ export const PieceTrayItem: React.FC<PieceTrayItemProps> = ({
               return (
                 <div
                   key={`${r}-${c}`}
-                  style={{
-                    width: cellSize,
-                    height: cellSize,
-                    ['--block-3d-shadow' as string]: shadowColor,
-                  }}
+                  style={
+                    {
+                      width: cellSize,
+                      height: cellSize,
+                      '--block-3d-shadow': shadowColor,
+                    } as React.CSSProperties
+                  }
                   className={`rounded-md bg-gradient-to-br ${activeColor.gradient} ${activeColor.border} border block-wood-tray relative overflow-hidden`}
                 >
                   <div className="wood-grain-texture" />
@@ -86,11 +92,13 @@ export const PieceTrayItem: React.FC<PieceTrayItemProps> = ({
             return (
               <div
                 key={`${r}-${c}`}
-                style={{
-                  width: cellSize,
-                  height: cellSize,
-                  ['--block-3d-shadow' as string]: shadowColor,
-                }}
+                style={
+                  {
+                    width: cellSize,
+                    height: cellSize,
+                    '--block-3d-shadow': shadowColor,
+                  } as React.CSSProperties
+                }
                 className={`rounded-md bg-gradient-to-br ${activeColor.gradient} ${activeColor.border} border block-3d-tray relative overflow-hidden`}
               >
                 <div className="block-3d-face" />

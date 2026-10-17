@@ -156,10 +156,17 @@ class SoundSystem {
     const lookahead = 0.12;
     const stepDuration = 0.144; // ~104 BPM 16th note
 
-    while (this.nextStepTime < this.ctx.currentTime + lookahead) {
+    // Guard against time lag or background tab throttling
+    if (this.nextStepTime < this.ctx.currentTime - 0.5) {
+      this.nextStepTime = this.ctx.currentTime + 0.05;
+    }
+
+    let iterations = 0;
+    while (this.nextStepTime < this.ctx.currentTime + lookahead && iterations < 8) {
       this.playBgmStep(this.bgmCurrentStep, this.nextStepTime);
       this.nextStepTime += stepDuration;
       this.bgmCurrentStep = (this.bgmCurrentStep + 1) % 64;
+      iterations++;
     }
   }
 
@@ -611,102 +618,86 @@ class SoundSystem {
   }
 
   /**
-   * Suara sorak riang "Horeee!" saat blast 1 baris
+   * Suara sorak riang instan saat blast 1 baris
    */
   public playHoree(): void {
     if (this.muted) return;
-
-    // Harmonik nada riang naik
     this.initContext();
-    if (this.ctx) {
-      try {
-        const now = this.ctx.currentTime;
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const notes = [523.25, 659.25, 783.99]; // C5, E5, G5 cheerful chime
+
+      notes.forEach((freq, idx) => {
+        if (!this.ctx) return;
+        const time = now + idx * 0.06;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(440, now);
-        osc.frequency.exponentialRampToValueAtTime(784, now + 0.12);
-        osc.frequency.exponentialRampToValueAtTime(987.77, now + 0.25);
 
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, time);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.02, time + 0.18);
+
+        gain.gain.setValueAtTime(0.12, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
 
         osc.connect(gain);
         gain.connect(this.ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.3);
-      } catch {
-        // Ignore
-      }
-    }
-
-    // Suara vokal "Horeee!" via SpeechSynthesis
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance('Horeee!');
-        utter.lang = 'id-ID';
-        utter.pitch = 1.35; // Nada tinggi ceria
-        utter.rate = 1.25;  // Tempo cepat gembira
-        utter.volume = 0.95;
-        window.speechSynthesis.speak(utter);
-      } catch {
-        // Ignore
-      }
+        osc.start(time);
+        osc.stop(time + 0.2);
+      });
+    } catch {
+      // Ignore
     }
   }
 
   /**
-   * Suara laki-laki besar bertenaga berseru "Mini block blast!" saat > 1 baris hancur
+   * Suara perayaan megah saat > 1 baris meledak sekaligus
    */
   public playMiniBlockBlastVoice(): void {
     if (this.muted) return;
-
-    // Dentuman bass tebal menggelegar di Web Audio
     this.initContext();
-    if (this.ctx) {
-      try {
-        const now = this.ctx.currentTime;
-        const subOsc = this.ctx.createOscillator();
-        const subGain = this.ctx.createGain();
-        subOsc.type = 'sine';
-        subOsc.frequency.setValueAtTime(115, now);
-        subOsc.frequency.exponentialRampToValueAtTime(42, now + 0.45);
+    if (!this.ctx) return;
 
-        subGain.gain.setValueAtTime(0.3, now);
-        subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+    try {
+      const now = this.ctx.currentTime;
+      // 1. Deep sub bass impact
+      const subOsc = this.ctx.createOscillator();
+      const subGain = this.ctx.createGain();
+      subOsc.type = 'sine';
+      subOsc.frequency.setValueAtTime(120, now);
+      subOsc.frequency.exponentialRampToValueAtTime(45, now + 0.35);
 
-        subOsc.connect(subGain);
-        subGain.connect(this.ctx.destination);
-        subOsc.start(now);
-        subOsc.stop(now + 0.5);
-      } catch {
-        // Ignore
-      }
-    }
+      subGain.gain.setValueAtTime(0.24, now);
+      subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
 
-    // Suara pria berwibawa & bernada rendah/berat (deep voice)
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance('Mini block blast!');
-        utter.pitch = 0.52; // Pitch rendah laki-laki besar (deep bass)
-        utter.rate = 0.88;  // Tempo artikulatif & berwibawa
-        utter.volume = 1.0;
+      subOsc.connect(subGain);
+      subGain.connect(this.ctx.destination);
+      subOsc.start(now);
+      subOsc.stop(now + 0.4);
 
-        // Cari suara pria jika tersedia di sistem browser
-        const voices = window.speechSynthesis.getVoices();
-        const maleVoice = voices.find((v) =>
-          /male|david|george|alex|daniel|guy|deep|id-id/i.test(v.name)
-        );
-        if (maleVoice) {
-          utter.voice = maleVoice;
-        }
+      // 2. Brass-like fanfare chord (C4, E4, G4, C5)
+      const brassNotes = [261.63, 329.63, 392.0, 523.25];
+      brassNotes.forEach((freq, idx) => {
+        if (!this.ctx) return;
+        const noteTime = now + 0.05 + idx * 0.04;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
 
-        window.speechSynthesis.speak(utter);
-      } catch {
-        // Ignore
-      }
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, noteTime);
+
+        gain.gain.setValueAtTime(0.08, noteTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.3);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(noteTime);
+        osc.stop(noteTime + 0.3);
+      });
+    } catch {
+      // Ignore
     }
   }
 

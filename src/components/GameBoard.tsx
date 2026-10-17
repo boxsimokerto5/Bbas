@@ -27,7 +27,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   clearingCols,
   shakeLevel,
   boardRef,
-  theme = THEMES.jewel,
+  theme = THEMES.wood,
   isHammerMode = false,
   onCellClick,
 }) => {
@@ -77,11 +77,17 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   return (
     <div
       ref={boardRef}
-      className={`relative p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl ${theme.boardBg} ${theme.boardBorder} border backdrop-blur-md transition-all duration-300 select-none touch-none ${shakeClass}`}
+      className={`relative p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl ${theme.boardBg} ${theme.boardBorder} border backdrop-blur-md transition-all duration-300 select-none touch-none ${shakeClass} ${
+        theme.isWood ? 'ring-2 ring-amber-900/60' : ''
+      }`}
       style={{
         boxShadow: theme.boardShadow,
       }}
     >
+      {/* Wood grain board texture overlay */}
+      {theme.isWood && (
+        <div className="pointer-events-none absolute inset-0 rounded-2xl sm:rounded-3xl wood-grain-texture opacity-30" />
+      )}
       {/* Drop line clear energy beam indicators */}
       {hasProjectedClears && (
         <div className="pointer-events-none absolute inset-2 sm:inset-2.5 z-10 overflow-hidden rounded-2xl">

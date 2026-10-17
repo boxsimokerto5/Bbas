@@ -1,5 +1,6 @@
 import React from 'react';
 import { ColorDef, PlacedPiece } from '../types/game';
+import { THEMES } from '../utils/themes';
 
 interface FloatingDragPieceProps {
   piece: PlacedPiece;
@@ -18,8 +19,11 @@ export const FloatingDragPiece: React.FC<FloatingDragPieceProps> = ({
   colorDef,
   isWood = false,
 }) => {
-  const activeColor = colorDef || piece.color;
-  const shadowColor = activeColor.shadowColor || 'rgba(0,0,0,0.5)';
+  const activeColor =
+    colorDef ||
+    piece.color ||
+    (isWood ? THEMES.wood.colorDefs.amber : THEMES.classic3d.colorDefs.amber);
+  const shadowColor = activeColor.shadowColor || (isWood ? '#2c1509' : 'rgba(0,0,0,0.5)');
   const { matrix } = piece.shape;
   const rows = matrix.length;
   const cols = matrix[0].length;
@@ -38,7 +42,7 @@ export const FloatingDragPiece: React.FC<FloatingDragPieceProps> = ({
       {/* Motion Speed Trails underneath piece */}
       <div
         className={`absolute -top-6 inset-x-2 h-7 bg-gradient-to-t ${
-          isWood ? 'from-amber-400/20' : 'from-white/20'
+          isWood ? 'from-amber-400/25' : 'from-white/20'
         } to-transparent blur-[1px] rounded-t-lg -z-10`}
       />
 
@@ -59,11 +63,13 @@ export const FloatingDragPiece: React.FC<FloatingDragPieceProps> = ({
               return (
                 <div
                   key={`${r}-${c}`}
-                  style={{
-                    width: cellSize,
-                    height: cellSize,
-                    ['--block-3d-shadow' as string]: shadowColor,
-                  }}
+                  style={
+                    {
+                      width: cellSize,
+                      height: cellSize,
+                      '--block-3d-shadow': shadowColor,
+                    } as React.CSSProperties
+                  }
                   className={`block-wood-3d bg-gradient-to-br ${activeColor.gradient} ${activeColor.border} border-2 relative overflow-hidden`}
                 >
                   <div className="wood-grain-texture" />
@@ -76,11 +82,13 @@ export const FloatingDragPiece: React.FC<FloatingDragPieceProps> = ({
             return (
               <div
                 key={`${r}-${c}`}
-                style={{
-                  width: cellSize,
-                  height: cellSize,
-                  ['--block-3d-shadow' as string]: shadowColor,
-                }}
+                style={
+                  {
+                    width: cellSize,
+                    height: cellSize,
+                    '--block-3d-shadow': shadowColor,
+                  } as React.CSSProperties
+                }
                 className={`block-3d bg-gradient-to-br ${activeColor.gradient} ${activeColor.border} border-2 relative overflow-hidden`}
               >
                 <div className="block-3d-face" />
